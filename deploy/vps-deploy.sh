@@ -25,7 +25,28 @@ echo ""
 # Step 1: Install system dependencies
 echo "📦 Step 1/8: Installing system dependencies..."
 apt update
-apt install -y python3.11 python3-pip python3.11-venv nodejs npm postgresql nginx git ffmpeg curl
+apt install -y python3 python3-pip python3-venv nodejs npm postgresql nginx git ffmpeg curl software-properties-common
+
+# Check Python version
+PYTHON_VERSION=$(python3 --version | awk '{print $2}' | cut -d. -f1,2)
+echo "   ✅ Found Python $PYTHON_VERSION"
+
+# Install Python 3.11 if not available (optional, but recommended)
+if ! command -v python3.11 &> /dev/null; then
+    echo "   Installing Python 3.11 from deadsnakes PPA..."
+    add-apt-repository ppa:deadsnakes/ppa -y 2>/dev/null || true
+    apt update 2>/dev/null || true
+    apt install -y python3.11 python3.11-venv python3.11-dev 2>/dev/null || echo "   Using system Python instead"
+fi
+
+# Determine which Python to use
+if command -v python3.11 &> /dev/null; then
+    PYTHON_BIN="python3.11"
+    echo "   ✅ Using Python 3.11"
+else
+    PYTHON_BIN="python3"
+    echo "   ✅ Using system Python $PYTHON_VERSION"
+fi
 
 # Step 2: Install yt-dlp
 echo "📦 Step 2/8: Installing yt-dlp..."
@@ -34,8 +55,8 @@ chmod a+rx /usr/local/bin/yt-dlp
 
 # Step 3: Create PostgreSQL database
 echo "🗄️  Step 3/8: Setting up PostgreSQL database..."
-sudo -u postgres psql -c "CREATE DATABASE phd_capital;" 2>/dev/null || echo "Database already exists"
-sudo -u postgres psql -c "CREATE USER phd_user WITH PASSWORD 'ChangeMeInProduction123!';" 2>/dev/null || echo "User already exists"
+sudo -u postgres psql -c "CREATE DATABASE phd_capital;" 2>/dev/null || echo "   Database already exists"
+sudo -u postgres psql -c "CREATE USER phd_user WITH PASSWORD 'ChangeMeInProduction123!';" 2>/dev/null || echo "   User already exists"
 sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE phd_capital TO phd_user;"
 sudo -u postgres psql -c "ALTER DATABASE phd_capital OWNER TO phd_user;"
 
@@ -48,19 +69,19 @@ if [ -d "$APP_DIR" ]; then
 else
     echo "   Cloning repository..."
     mkdir -p /var/www
-    # Replace with your git repository URL
-    echo "   ⚠️  Please clone your repository to $APP_DIR manually:"
-    echo "      git clone <your-repo-url> $APP_DIR"
-    echo "      Then run this script again."
-    exit 1
+    git clone https://github.com/sudiptarafdar7-spec/Rationale-Studio.git $APP_DIR
 fi
 
 cd $APP_DIR
 
+# Create necessary directories
+mkdir -p backend/uploaded_files backend/job_files backend/channel_logos
+
 # Step 5: Install Python dependencies
 echo "🐍 Step 5/8: Installing Python dependencies..."
-pip install -r requirements.txt
-pip install gunicorn
+$PYTHON_BIN -m pip install --upgrade pip
+$PYTHON_BIN -m pip install -r requirements.txt
+$PYTHON_BIN -m pip install gunicorn
 
 # Step 6: Build React frontend
 echo "⚛️  Step 6/8: Building React frontend..."
@@ -96,7 +117,7 @@ fi
 
 # Step 8: Create systemd service
 echo "⚙️  Step 8/8: Creating systemd service..."
-cat > /etc/systemd/system/phd-capital.service << 'EOF'
+cat > /etc/systemd/system/phd-capital.service << EOF
 [Unit]
 Description=PHD Capital Rationale Studio
 After=network.target postgresql.service
@@ -107,7 +128,7 @@ User=www-data
 WorkingDirectory=/var/www/phd-capital
 Environment="PATH=/usr/local/bin:/usr/bin:/bin"
 EnvironmentFile=/var/www/phd-capital/.env
-ExecStart=/usr/local/bin/gunicorn --bind 127.0.0.1:5000 --workers 4 --timeout 120 'backend.app:create_app()'
+ExecStart=$(which gunicorn) --bind 127.0.0.1:5000 --workers 4 --timeout 120 'backend.app:create_app()'
 Restart=always
 RestartSec=10
 
@@ -120,7 +141,7 @@ echo "🌐 Creating Nginx configuration..."
 cat > /etc/nginx/sites-available/phd-capital << EOF
 server {
     listen 80;
-    server_name $DOMAIN;
+    server_name $DOMAIN www.$DOMAIN;
 
     client_max_body_size 100M;
 
@@ -178,5 +199,5 @@ echo "🌐 Your app should be running at: http://$DOMAIN"
 echo ""
 echo "🔐 To add SSL certificate (recommended):"
 echo "   apt install certbot python3-certbot-nginx"
-echo "   certbot --nginx -d $DOMAIN"
+echo "   certbot --nginx -d $DOMAIN -d www.$DOMAIN"
 echo ""
