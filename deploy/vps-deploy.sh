@@ -79,9 +79,9 @@ mkdir -p backend/uploaded_files backend/job_files backend/channel_logos
 
 # Step 5: Install Python dependencies
 echo "🐍 Step 5/8: Installing Python dependencies..."
-$PYTHON_BIN -m pip install --upgrade pip
-$PYTHON_BIN -m pip install -r requirements.txt
-$PYTHON_BIN -m pip install gunicorn
+# Don't upgrade pip on system-managed installations
+$PYTHON_BIN -m pip install -r requirements.txt --break-system-packages 2>/dev/null || $PYTHON_BIN -m pip install -r requirements.txt
+$PYTHON_BIN -m pip install gunicorn --break-system-packages 2>/dev/null || $PYTHON_BIN -m pip install gunicorn
 
 # Step 6: Build React frontend
 echo "⚛️  Step 6/8: Building React frontend..."
