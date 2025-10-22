@@ -1,0 +1,16 @@
+# Netscape HTTP Cookie File
+# This is a template file. Replace this with your actual YouTube cookies.
+#
+# To get real cookies:
+# 1. Install browser extension "Get cookies.txt LOCALLY" (Chrome/Firefox)
+# 2. Visit https://www.youtube.com (while logged in)
+# 3. Click the extension and export cookies
+# 4. Rename the exported file to "youtube_cookies.txt"
+# 5. Place it in the backend/ directory (same location as this file)
+#
+# IMPORTANT: Do NOT commit the real youtube_cookies.txt file to git!
+#
+# Format example (real cookies will look like this):
+# .youtube.com	TRUE	/	TRUE	1735689600	VISITOR_INFO1_LIVE	xxxxxxxxxxxxxxx
+# .youtube.com	TRUE	/	TRUE	1735689600	PREF	xxxxxxxxxxxxxxx
+# .youtube.com	TRUE	/	FALSE	1735689600	YSC	xxxxxxxxxxxxxxx

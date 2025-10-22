@@ -1,0 +1,98 @@
+# Step 3: Youtube Video Transcription with Speech Recognition using Assembly AI
+import assemblyai as aai
+from datetime import timedelta
+import pandas as pd
+import os
+
+# STEP 2: API Key (safer via env variable, fallback to string if needed)
+aai.settings.api_key = os.getenv("ASSEMBLYAI_API_KEY", "9a59b83d223e414ab587d658afa13e6b")
+
+# STEP 3: Configure transcription
+config = aai.TranscriptionConfig(
+    speaker_labels=True,
+    speech_model=aai.SpeechModel.best,
+    language_detection=True,
+    punctuate=True,
+    format_text=True,
+    word_boost=[
+        "Nifty", "Sensex", "Reliance", "HDFC Bank", "Infosys", "Tata Motors",
+        "BSE", "NSE", "Nifty 50", "Nifty 200", "Bank Nifty",
+        "Buy on Dip", "Stop Loss", "CMP", "target", "support",
+        "resistance", "breakout", "SEBI", "intraday", "swing", "equity",
+        "derivative", "F&O", "bullish", "bearish", "small-cap", "mid-cap",
+        "large-cap", "The Bonus", "Money 9", "Opening Buzz",
+        "Sandeep Grover", "Sandeep", "Pradip", "Pradip Halder",
+        "Mr. Halder", "Halder"
+    ],
+    boost_param=aai.WordBoost.high
+)
+
+transcriber = aai.Transcriber(config=config)
+
+# --- Load CSV with Folder Paths ---
+df = pd.read_csv("input.csv")
+
+for idx, row in df.iterrows():
+    folder_path = row["Folder Path"]
+
+    # Full path to prepared audio file
+    AUDIO_FILE = os.path.join(folder_path, "audio_16k_mono.wav")
+
+    if not os.path.exists(AUDIO_FILE):
+        print(f"❌ Audio file not found in {folder_path}, skipping...")
+        continue
+
+    print(f"\n⏳ Transcribing audio from: {AUDIO_FILE}")
+
+    try:
+        transcript = transcriber.transcribe(AUDIO_FILE)
+        print("✅ Transcription complete!\n")
+    except Exception as e:
+        print("❌ Transcription failed:", e)
+        continue
+
+    # --- Helper to format time ---
+    def format_time(ms):
+        td = timedelta(milliseconds=ms)
+        total_seconds = int(td.total_seconds())
+        hours, remainder = divmod(total_seconds, 3600)
+        minutes, seconds = divmod(remainder, 60)
+        return f"{hours:02}:{minutes:02}:{seconds:02}"
+
+    # --- Collect transcript utterances ---
+    data = []
+    if transcript.utterances:
+        for utt in transcript.utterances:
+            start = format_time(utt.start)
+            end = format_time(utt.end)
+            data.append([f"Speaker {utt.speaker}", start, end, utt.text])
+    else:
+        # fallback if utterances missing
+        data.append(["Speaker 1", "00:00:00", format_time(transcript.audio_duration), transcript.text])
+
+    # --- Make DataFrame ---
+    df_out = pd.DataFrame(data, columns=["Speaker", "Start Time", "End Time", "Transcription"])
+
+    # --- Ensure chronological order ---
+    df_out["SortKey"] = pd.to_timedelta(df_out["Start Time"])
+    df_out = df_out.sort_values("SortKey").drop(columns=["SortKey"]).reset_index(drop=True)
+
+    # --- Save to CSV ---
+    csv_file = os.path.join(folder_path, "transcript.csv")
+    df_out.to_csv(csv_file, index=False, encoding="utf-8-sig")
+    print(f"💾 Transcript saved as {csv_file}")
+
+    # --- Save to TXT (speaker-friendly format) ---
+    txt_file = os.path.join(folder_path, "transcript.txt")
+    with open(txt_file, "w", encoding="utf-8") as f:
+        for i, row2 in df_out.iterrows():
+            f.write(f"[{row2['Speaker']}] {row2['Start Time']} - {row2['End Time']} | {row2['Transcription']}\n")
+    print(f"💾 Transcript also saved as {txt_file}")
+
+    # --- Print nicely ---
+    pd.set_option("display.max_colwidth", 120)
+    pd.set_option("display.width", None)
+
+    print("\n📑 Transcript Preview:\n")
+    for i, row2 in df_out.iterrows():
+        print(f"[{row2['Speaker']}] {row2['Start Time']} - {row2['End Time']} | {row2['Transcription']}")

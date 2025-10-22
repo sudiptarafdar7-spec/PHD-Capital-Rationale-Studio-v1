@@ -1,0 +1,96 @@
+# Step 11: Get CMP from Dhan API for each stocks
+import pandas as pd
+import os
+import requests
+from datetime import datetime, timedelta
+
+# --- Step 2: Config ---
+API_KEY = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzUxMiJ9.eyJpc3MiOiJkaGFuIiwicGFydG5lcklkIjoiIiwiZXhwIjoxNzYxMTA4MTI5LCJpYXQiOjE3NjEwMjE3MjksInRva2VuQ29uc3VtZXJUeXBlIjoiU0VMRiIsIndlYmhvb2tVcmwiOiIiLCJkaGFuQ2xpZW50SWQiOiIxMTA4MzI5MDc2In0.V5bss_4LLXQBFJ0xyVuDxmUEmhyilgG-qwryZ8xbsCxXA1J-_DpYL74vZhzrBToCJS7a4hDw0j5fFi276IC7cA"  # replace with your key
+URL = "https://api.dhan.co/v2/charts/intraday"
+
+headers = {
+    "accept": "application/json",
+    "content-type": "application/json",
+    "access-token": API_KEY
+}
+
+input_csv = "/content/input.csv"  # has Folder Path, Date, Time columns
+
+# --- Step 3: Process each folder path ---
+df_input = pd.read_csv(input_csv)
+
+for _, row in df_input.iterrows():
+    folder_path = row["Folder Path"]
+    input_file = os.path.join(folder_path, "stocks_with_date_time.csv")
+    output_file = os.path.join(folder_path, "stocks_with_cmp.csv")
+
+    if not os.path.exists(input_file):
+        print(f"⚠️ Skipping {folder_path}, no stocks_with_date_time.csv found.")
+        continue
+
+    try:
+        # Load stock file
+        df = pd.read_csv(input_file)
+
+        # Ensure CMP column exists
+        if "CMP" not in df.columns:
+            df["CMP"] = None
+
+        # Process each row
+        for i, r in df.iterrows():
+            try:
+                # Parse datetime
+                dt_str = f"{r['DATE']} {r['START TIME']}"
+                dt = datetime.strptime(dt_str, "%Y-%m-%d %H:%M:%S")
+
+                from_date = dt.strftime("%Y-%m-%d %H:%M:%S")
+                to_date = (dt + timedelta(minutes=10)).strftime("%Y-%m-%d %H:%M:%S")
+
+                # Exchange segment
+                exchange = str(r["EXCHANGE"]).upper()
+                segment = str(r["SEGMENT"]).upper()
+                instrument = str(r["INSTRUMENT"]).upper()
+
+                if instrument == "EQUITY":
+                    exchange_segment = f"{exchange}_EQ"
+                else:
+                    exchange_segment = f"{exchange}_{segment}"
+
+                # Payload
+                payload = {
+                    "securityId": str(r["SECURITY ID"]).split(".")[0],  # remove .0 if float
+                    "exchangeSegment": exchange_segment,
+                    "instrument": instrument,
+                    "interval": "1",
+                    "oi": False,
+                    "fromDate": from_date,
+                    "toDate": to_date
+                }
+
+                # API call
+                resp = requests.post(URL, headers=headers, json=payload).json()
+
+                if "close" in resp and len(resp["close"]) > 0:
+                    cmp_value = resp["close"][0]
+                    df.at[i, "CMP"] = cmp_value
+                    print(f"✅ CMP {cmp_value} for {r['STOCK SYMBOL']} at {from_date}")
+                else:
+                    print(f"⚠️ No CMP data for {r['STOCK SYMBOL']} ({r['SECURITY ID']}) at {from_date}")
+
+            except Exception as e:
+                print(f"❌ Error for row {i}: {e}")
+
+        # Reorder columns
+        final_cols = [
+            "STOCK NAME", "STOCK SYMBOL", "LISTED NAME", "SHORT NAME",
+            "SECURITY ID", "EXCHANGE", "INSTRUMENT", "SEGMENT",
+            "START TIME", "DATE", "CMP"
+        ]
+        df = df.reindex(columns=final_cols)
+
+        # Save file
+        df.to_csv(output_file, index=False)
+        print(f"✅ Saved CMP data: {output_file}")
+
+    except Exception as e:
+        print(f"❌ Error processing {folder_path}: {e}")

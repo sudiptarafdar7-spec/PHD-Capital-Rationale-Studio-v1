@@ -1,0 +1,58 @@
+# ✅ Simplified YouTube Audio Downloader + Preparer
+# Step 1: Imports
+from yt_dlp import YoutubeDL
+from pydub import AudioSegment
+import os
+
+# Step 2: Ask for YouTube URL
+youtube_url = input("Enter YouTube video URL: ").strip()
+if not youtube_url:
+    raise ValueError("Please provide a valid YouTube URL.")
+
+# Step 3: Create output folder
+folder_path = os.path.join(os.getcwd(), "youtube_audio")
+os.makedirs(folder_path, exist_ok=True)
+
+# Step 4: Download audio using yt-dlp
+def download_audio_from_youtube(url, output_path, output_filename="audio.wav"):
+    temp_file = os.path.join(output_path, "downloaded_audio.%(ext)s")
+    final_path = os.path.join(output_path, output_filename)
+
+    ydl_opts = {
+        'format': 'bestaudio/best',
+        'outtmpl': temp_file,
+        'quiet': True,
+        'noprogress': True,
+        'postprocessors': [{
+            'key': 'FFmpegExtractAudio',
+            'preferredcodec': 'wav',
+            'preferredquality': '192',
+        }]
+    }
+
+    print("🎧 Downloading audio from YouTube...")
+    with YoutubeDL(ydl_opts) as ydl:
+        ydl.download([url])
+
+    downloaded_file = os.path.join(output_path, "downloaded_audio.wav")
+    if os.path.exists(downloaded_file):
+        os.rename(downloaded_file, final_path)
+
+    return final_path
+
+# Step 5: Convert to 16 kHz mono for STT
+def prepare_audio_for_google_stt(input_audio, output_path, output_filename="audio_16k_mono.wav"):
+    final_path = os.path.join(output_path, output_filename)
+    print("🔊 Converting to 16 kHz mono WAV...")
+    sound = AudioSegment.from_file(input_audio)
+    sound = sound.set_channels(1)       # mono
+    sound = sound.set_frame_rate(16000) # 16 kHz
+    sound.export(final_path, format="wav")
+    return final_path
+
+# Step 6: Run download & preparation
+audio_file = download_audio_from_youtube(youtube_url, folder_path)
+prepared_audio = prepare_audio_for_google_stt(audio_file, folder_path)
+
+print("✅ Audio ready ")
+print(prepared_audio)

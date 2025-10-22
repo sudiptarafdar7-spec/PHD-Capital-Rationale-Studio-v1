@@ -1,0 +1,90 @@
+# Step 12: Extract Analysis by Pradip
+import pandas as pd
+import os
+import json
+
+# --- Step 0: Load folder path from input.csv ---
+input_df = pd.read_csv("input.csv")
+folder_path = input_df.loc[0, "Folder Path"].strip()
+print(f"📂 Using folder: {folder_path}")
+
+# --- Step 1: Load detected speakers ---
+with open(os.path.join(folder_path, "detected_speakers.txt"), "r", encoding="utf-8") as f:
+    detected = f.read().strip().splitlines()
+
+anchor_speaker = detected[0].split(":")[1].strip()
+pradip_speaker = detected[1].split(":")[1].strip()
+print(f"✅ Anchor = {anchor_speaker}, Pradip = {pradip_speaker}")
+
+# --- Step 2: Load filtered transcript ---
+with open(os.path.join(folder_path, "filtered_transcription.txt "), "r", encoding="utf-8") as f:
+    convo_text = f.read()
+
+# --- Step 3: Load stocks_with_cmp.csv ---
+stocks_df = pd.read_csv(os.path.join(folder_path, "stocks_with_cmp.csv"))
+stock_names = stocks_df["STOCK NAME"].tolist()
+
+# --- Step 4: Build single GPT prompt ---
+prompt = f"""
+You are a financial market analyst. Extract ONLY {pradip_speaker}'s detailed stock analysis
+from the transcript below. Do NOT include any other speaker's words.
+
+Transcript (Pradip only):
+{convo_text}
+
+Instructions:
+- For each of these stocks: {', '.join(stock_names)}
+- Write the detailed, elaborative analysis given by Pradip.
+- Start each stock's section with: "For [STOCK NAME], ..."
+- Use ₹ for all amounts, and convert word numbers to digits.
+- If chart type is mentioned, include it in the analysis as "On [Chart Type] charts, ...".
+- If chart type not mentioned, default to "Daily, ...".
+- Only 3 Chart type strictly [Daily/Weekly/Monthly]
+- If analysis was revised later, keep ONLY the FINAL/latest version.
+- Ignore greetings or casual talk.
+-  do not use I or We. Speaker, Pradip name etc, and for each write to minimum 100 words but use simple english not complex english words.
+- Example Analysis must like: For Jamna Auto, the view remains positive even though the momentum has
+slowed down compared to earlier moves from the ₹70–80 range. The stock looks
+stronger when compared to Rico Auto, as it has taken solid support around the
+₹100 mark. A strict stop-loss should be maintained at ₹94–95, and as long as the
+stock sustains above this level, the overall outlook remains intact. The key
+resistance zone is around ₹110–111, and once this level is crossed, the stock has
+the potential to move further towards ₹125–130 levels. Holding is advisable with
+disciplined stop-loss management.
+- Output ONLY valid JSON mapping each stock to:
+{{
+  "STOCK NAME": {{"chart_type": "...", "analysis": "..."}}
+}}
+"""
+
+# --- Step 5: Call GPT once ---
+response = client.chat.completions.create(
+    model="gpt-5",
+    messages=[{"role": "user", "content": prompt}]
+)
+
+# --- Step 6: Parse GPT output ---
+content = response.choices[0].message.content.strip()
+data = json.loads(content)  # stock_name -> {chart_type, analysis}
+
+# --- Step 7: Add columns to dataframe ---
+chart_types = []
+analyses = []
+for stock in stocks_df["STOCK NAME"]:
+    if stock in data:
+        chart_types.append(data[stock].get("chart_type", "Daily"))
+        analysis = data[stock].get("analysis", "").replace("\n", " ").replace("|", " ")
+        analyses.append(analysis)
+    else:
+        chart_types.append("Daily")
+        analyses.append("")
+
+stocks_df["CHART TYPE"] = chart_types
+stocks_df["ANALYSIS"] = analyses
+
+# --- Step 8: Save output with UTF-8 BOM for Excel ---
+output_path = os.path.join(folder_path, "stocks_with_analysis.csv")
+stocks_df.to_csv(output_path, index=False, encoding="utf-8-sig")  # ⚡ important
+
+print(f"✅ Saved CSV with proper UTF-8 encoding: {output_path}")
+

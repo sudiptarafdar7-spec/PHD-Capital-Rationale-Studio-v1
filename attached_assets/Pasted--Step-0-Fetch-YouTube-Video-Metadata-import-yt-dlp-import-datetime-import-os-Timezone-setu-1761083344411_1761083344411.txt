@@ -1,0 +1,77 @@
+# Step 0: Fetch YouTube Video Metadata
+import yt_dlp
+import datetime
+import os
+
+# Timezone setup
+try:
+    from zoneinfo import ZoneInfo
+    IST = ZoneInfo("Asia/Kolkata")
+except Exception:
+    IST = datetime.timezone(datetime.timedelta(hours=5, minutes=30))
+
+
+def _format_date_time_from_info(info):
+    ts = info.get("release_timestamp") or info.get("timestamp")
+    if isinstance(ts, (int, float)):
+        utc_dt = datetime.datetime.fromtimestamp(ts, tz=datetime.timezone.utc)
+        ist_dt = utc_dt.astimezone(IST)
+        return ist_dt.strftime("%Y-%m-%d"), ist_dt.strftime("%H:%M:00")
+    upload_date = info.get("upload_date")
+    if upload_date and len(upload_date) == 8:
+        return f"{upload_date[:4]}-{upload_date[4:6]}-{upload_date[6:]}", "00:00:00"
+    now_ist = datetime.datetime.now(IST)
+    return now_ist.strftime("%Y-%m-%d"), now_ist.strftime("%H:%M:00")
+
+
+def sanitize_filename(name):
+    return "".join(c for c in name if c.isalnum() or c in (" ", "-", "_")).rstrip().replace(" ", "_")
+
+
+def fetch_youtube_metadata(url):
+    """Fetch metadata for a YouTube video using yt_dlp."""
+    try:
+        ydl_opts = {"quiet": True, "no_warnings": True}
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            info = ydl.extract_info(url, download=False)
+
+        video_id = info.get("id")
+        title = info.get("title") or ""
+        channel = info.get("uploader") or ""
+        thumbnail = info.get("thumbnail")
+        description = info.get("description") or ""
+        duration = info.get("duration")
+        view_count = info.get("view_count")
+        like_count = info.get("like_count")
+
+        # Format date and time
+        date_fmt, time_fmt = _format_date_time_from_info(info)
+
+        metadata = {
+            "YouTube URL": url,
+            "Video ID": video_id,
+            "Title": title,
+            "Channel Name": channel,
+            "Upload Date": date_fmt,
+            "Upload Time": time_fmt,
+            "Thumbnail": thumbnail,
+            "Duration (sec)": duration,
+            "Views": view_count,
+            "Likes": like_count,
+            "Description": description,
+        }
+
+        return metadata
+
+    except Exception as e:
+        print(f"❌ Error fetching metadata: {e}")
+        return None
+
+
+# ------------------ Example Usage ------------------
+url = input("Enter YouTube video URL: ").strip()
+data = fetch_youtube_metadata(url)
+if data:
+    print("\n✅ Video Metadata:\n")
+    for k, v in data.items():
+        print(f"{k}: {v}")
