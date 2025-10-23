@@ -50,3 +50,8 @@ backend/api_keys/
 backend/uploaded_files/
 backend/channel_logos/
 backend/job_files/
+
+# Temporary files and uploads
+attached_assets/
+*.tmp
+*.temp

@@ -1,4 +1,9 @@
 #!/bin/bash
+#
+# PHD Capital - Quick Update Script
+# Updates application after git push
+#
+
 set -e
 
 echo "=========================================="
@@ -15,22 +20,33 @@ fi
 
 cd $APP_DIR
 
-echo "📥 Step 1/4: Pulling latest changes from Git..."
-git pull
+echo "📥 Step 1/5: Pulling latest changes from Git..."
+git fetch origin
+git reset --hard origin/main
+git pull origin main
 
-echo "📦 Step 2/4: Installing/updating dependencies..."
-pip install -r requirements.txt
-npm install
+echo "📦 Step 2/5: Updating Python dependencies..."
+source venv/bin/activate
+pip install -r requirements.txt --quiet
+deactivate
 
-echo "🔨 Step 3/4: Building React frontend..."
+echo "📦 Step 3/5: Updating Node dependencies..."
+npm install --quiet
+
+echo "🔨 Step 4/5: Building React frontend..."
 npm run build
 
-echo "🔄 Step 4/4: Restarting application..."
+echo "🔄 Step 5/5: Restarting application..."
 systemctl restart phd-capital
+
+# Wait for service to start
+sleep 3
 
 echo ""
 echo "✅ Update complete!"
 echo ""
-echo "📊 Check status: systemctl status phd-capital"
-echo "📋 View logs: journalctl -u phd-capital -f"
+echo "📊 Service status:"
+systemctl status phd-capital --no-pager -l
+echo ""
+echo "📋 View live logs: journalctl -u phd-capital -f"
 echo ""
