@@ -41,15 +41,15 @@ def fetch_video_metadata(youtube_url):
             '-J', 
             '--no-warnings', 
             '--skip-download',
+            '--no-cookies',  # Disable cookie saving to avoid permission errors
             '--user-agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
             '--extractor-args', 'youtube:player_client=android,web',
             '--extractor-args', 'youtube:skip=dash,hls'
         ]
         
-        # Check if cookies file exists (for YouTube authentication)
-        cookies_path = os.path.join(os.path.dirname(__file__), '..', 'youtube_cookies.txt')
-        if os.path.exists(cookies_path):
-            cmd.extend(['--cookies', cookies_path])
+        # Note: Cookies disabled to avoid permission issues on VPS
+        # If you need cookies for authentication, create a writable directory
+        # and configure yt-dlp to save cookies there
         
         # Add the URL
         cmd.append(youtube_url)

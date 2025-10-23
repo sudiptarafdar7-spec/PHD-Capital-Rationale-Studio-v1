@@ -88,14 +88,12 @@ def download_captions(job_id, youtube_url, cookies_file=None):
             "--write-auto-subs",
             "--sub-lang", "hi,en",  # Try Hindi first, then English
             "--sub-format", "json3/vtt/srt",
+            "--no-cookies",  # Disable cookie saving to avoid permission errors
             "-o", os.path.join(captions_folder, "youtube.%(ext)s"),
             youtube_url
         ]
         
-        # Add cookies if available
-        if cookies_file and os.path.exists(cookies_file):
-            cmd.extend(["--cookies", cookies_file])
-            print(f"✓ Using cookies file for authentication")
+        # Note: Cookies disabled to avoid permission issues on VPS
         
         # Run yt-dlp command
         result = subprocess.run(
