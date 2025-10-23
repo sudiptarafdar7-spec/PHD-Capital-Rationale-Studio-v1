@@ -34,30 +34,6 @@ def fetch_video_metadata(youtube_url):
     Raises:
         Exception: If video cannot be fetched or parsed
     """
-    # Try multiple player client configurations for better success rate
-    player_clients = [
-        'android,web',  # Try Android client first (usually works best)
-        'web',          # Fallback to web only
-        'ios,web'       # Try iOS as last resort
-    ]
-    
-    last_error = None
-    
-    for player_client in player_clients:
-        try:
-            result = _fetch_with_client(youtube_url, player_client)
-            if result:
-                return result
-        except Exception as e:
-            last_error = str(e)
-            continue
-    
-    # All attempts failed
-    raise Exception(f"Failed to fetch video metadata after trying multiple methods. Last error: {last_error}")
-
-
-def _fetch_with_client(youtube_url, player_client):
-    """Helper function to fetch video with specific player client"""
     try:
         # Build yt-dlp command with enhanced YouTube bypass
         cmd = [
@@ -65,22 +41,15 @@ def _fetch_with_client(youtube_url, player_client):
             '-J', 
             '--no-warnings', 
             '--skip-download',
-            '--no-check-certificates',
-            '--geo-bypass',
             '--user-agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-            '--extractor-args', f'youtube:player_client={player_client}',
-            '--extractor-args', 'youtube:skip=dash,hls',
-            '--referer', 'https://www.youtube.com/'
+            '--extractor-args', 'youtube:player_client=android,web',
+            '--extractor-args', 'youtube:skip=dash,hls'
         ]
         
-        # Check if cookies file exists in job_files directory (writable location)
-        cookies_path = os.path.join('backend', 'job_files', 'youtube_cookies.txt')
+        # Check if cookies file exists (for YouTube authentication)
+        cookies_path = os.path.join(os.path.dirname(__file__), '..', 'youtube_cookies.txt')
         if os.path.exists(cookies_path):
             cmd.extend(['--cookies', cookies_path])
-            print(f"  ✓ Using cookies from: {cookies_path}")
-        
-        # Using multiple bypass options and player clients to handle YouTube restrictions
-        print(f"  Trying player client: {player_client}")
         
         # Add the URL
         cmd.append(youtube_url)
@@ -95,14 +64,11 @@ def _fetch_with_client(youtube_url, player_client):
         
         if result.returncode != 0:
             error_msg = result.stderr
-            # Provide helpful error message
+            # Provide helpful error message if cookies are needed
             if "Sign in to confirm" in error_msg or "bot" in error_msg.lower():
                 raise Exception(
-                    "YouTube is blocking this request. This may be due to: "
-                    "1) Age-restricted or private video, "
-                    "2) Geographic restrictions, or "
-                    "3) YouTube's bot detection. "
-                    "Please try a different video or check if the video is publicly accessible."
+                    "YouTube requires authentication. Please create a youtube_cookies.txt file in the backend/ directory. "
+                    "You can export cookies using a browser extension like 'Get cookies.txt LOCALLY' from youtube.com"
                 )
             raise Exception(f"yt-dlp failed: {error_msg}")
         

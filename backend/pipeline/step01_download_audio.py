@@ -44,7 +44,6 @@ def download_audio(job_id, youtube_url, cookies_file=None):
             'quiet': False,
             'no_warnings': False,
             'extract_flat': False,
-            'nocheckcertificate': True,
             'postprocessors': [{
                 'key': 'FFmpegExtractAudio',
                 'preferredcodec': 'wav',
@@ -52,20 +51,14 @@ def download_audio(job_id, youtube_url, cookies_file=None):
             }],
         }
         
-        # Check for cookies file in job_files directory (writable location)
-        cookies_path = os.path.join('backend', 'job_files', 'youtube_cookies.txt')
-        if os.path.exists(cookies_path):
-            ydl_opts['cookiefile'] = cookies_path
-            print(f"✓ Using cookies for authentication")
+        # Add cookies if available (for bot detection / 403 errors)
+        if cookies_file and os.path.exists(cookies_file):
+            ydl_opts['cookiefile'] = cookies_file
+            print(f"✓ Using cookies file for authentication")
         
         # Add options to avoid bot detection and 403 errors
         ydl_opts.update({
             'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-            'geo_bypass': True,
-            'nocheckcertificate': True,
-            'http_headers': {
-                'Referer': 'https://www.youtube.com/',
-            },
             'extractor_args': {
                 'youtube': {
                     'player_client': ['android', 'web'],
