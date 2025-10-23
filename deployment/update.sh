@@ -1,7 +1,9 @@
 #!/bin/bash
 #
-# PHD Capital - Quick Update Script
-# Run this after pushing new code to GitHub
+# PHD Capital Rationale Studio - Quick Update Script
+# Run this after pushing changes to GitHub
+#
+# Usage: bash update.sh
 #
 
 set -e
@@ -13,45 +15,56 @@ echo "  PHD CAPITAL - UPDATE DEPLOYMENT"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo ""
 
-if [ ! -d "$PROJECT_DIR" ]; then
-    echo "❌ Project not found at $PROJECT_DIR"
+# Check if running as root
+if [ "$EUID" -ne 0 ]; then 
+    echo "❌ ERROR: Please run as root"
+    echo ""
+    echo "Run: sudo bash update.sh"
     exit 1
 fi
 
+# Navigate to project directory
 cd "$PROJECT_DIR"
 
-echo "📥 Step 1/5: Pulling latest code from GitHub..."
+echo "📥 STEP 1/6: Pulling latest code from GitHub..."
 git fetch origin
 git reset --hard origin/main
 git pull origin main
-
+echo "   ✅ Code updated"
 echo ""
-echo "🐍 Step 2/5: Updating Python dependencies..."
+
+echo "🐍 STEP 2/6: Updating Python dependencies..."
 source venv/bin/activate
 pip install -r requirements.txt --quiet
 deactivate
-
+echo "   ✅ Python dependencies updated"
 echo ""
-echo "📦 Step 3/5: Updating Node dependencies..."
+
+echo "📦 STEP 3/6: Updating Node.js dependencies..."
 npm install --quiet
-
+echo "   ✅ Node dependencies updated"
 echo ""
-echo "🔨 Step 4/5: Building React frontend..."
+
+echo "⚛️  STEP 4/6: Building React frontend..."
 npm run build
-
+echo "   ✅ Frontend built"
 echo ""
-echo "🔄 Step 5/5: Restarting application..."
+
+echo "🔄 STEP 5/6: Restarting application..."
 systemctl restart phd-capital
-
-sleep 3
-
+echo "   ✅ Application restarted"
 echo ""
+
+echo "🔍 STEP 6/6: Checking status..."
+sleep 3
+systemctl status phd-capital --no-pager -l | head -20
+echo ""
+
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "✅ UPDATE COMPLETE!"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo ""
-echo "📊 Service Status:"
-systemctl status phd-capital --no-pager -l | head -20
+echo "🌐 Application URL: http://researchrationale.in"
 echo ""
-echo "📋 View live logs: journalctl -u phd-capital -f"
+echo "📋 View logs: journalctl -u phd-capital -f"
 echo ""
