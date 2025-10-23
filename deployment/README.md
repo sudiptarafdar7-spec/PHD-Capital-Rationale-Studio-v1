@@ -3,7 +3,7 @@
 ## Server Details
 - **IP:** 72.60.111.9
 - **Domain:** researchrationale.in
-- **Project:** Rationale Studio
+- **Project:** rationale-studio
 - **OS:** Ubuntu 24.04 LTS
 
 ---
@@ -77,7 +77,7 @@ journalctl -u phd-capital -f
 systemctl restart phd-capital
 
 # Update after git push
-cd "/var/www/Rationale Studio"
+cd /var/www/rationale-studio
 bash deployment/update.sh
 ```
 

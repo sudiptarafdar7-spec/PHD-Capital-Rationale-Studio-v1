@@ -6,7 +6,7 @@
 
 set -e
 
-PROJECT_DIR="/var/www/Rationale Studio"
+PROJECT_DIR="/var/www/rationale-studio"
 
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "  PHD CAPITAL - UPDATE DEPLOYMENT"

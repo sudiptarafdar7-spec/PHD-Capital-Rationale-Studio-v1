@@ -16,7 +16,7 @@ echo "━━━━━━━━━━━━━━━━━━━━━━━━�
 echo "  Server IP: 72.60.111.9"
 echo "  Domain: researchrationale.in"
 echo "  OS: Ubuntu 24.04 LTS"
-echo "  Project Folder: Rationale Studio"
+echo "  Project Folder: rationale-studio"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo ""
 
@@ -29,7 +29,7 @@ if [ "$EUID" -ne 0 ]; then
 fi
 
 # Configuration
-PROJECT_DIR="/var/www/Rationale Studio"
+PROJECT_DIR="/var/www/rationale-studio"
 DOMAIN="researchrationale.in"
 GITHUB_REPO="https://github.com/sudiptarafdar7-spec/PHD-Capital-Rationale-Studio-v1.git"
 DB_NAME="phd_rationale_db"
@@ -262,10 +262,10 @@ After=network.target postgresql.service
 Type=notify
 User=www-data
 Group=www-data
-WorkingDirectory=/var/www/Rationale Studio
-Environment="PATH=/var/www/Rationale Studio/venv/bin:/usr/local/bin:/usr/bin:/bin"
-EnvironmentFile=/var/www/Rationale Studio/.env
-ExecStart=/var/www/Rationale Studio/venv/bin/gunicorn --bind 127.0.0.1:5000 --workers 4 --timeout 300 --worker-class sync 'backend.app:create_app()'
+WorkingDirectory=/var/www/rationale-studio
+Environment="PATH=/var/www/rationale-studio/venv/bin:/usr/local/bin:/usr/bin:/bin"
+EnvironmentFile=/var/www/rationale-studio/.env
+ExecStart=/var/www/rationale-studio/venv/bin/gunicorn --bind 127.0.0.1:5000 --workers 4 --timeout 300 --worker-class sync 'backend.app:create_app()'
 Restart=always
 RestartSec=10
 StandardOutput=journal
@@ -408,7 +408,7 @@ echo "Restart application:"
 echo "  systemctl restart phd-capital"
 echo ""
 echo "Update application (after git push):"
-echo "  cd '/var/www/Rationale Studio' && bash deployment/update.sh"
+echo "  cd /var/www/rationale-studio && bash deployment/update.sh"
 echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo ""

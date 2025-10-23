@@ -1,10 +1,10 @@
-# 🚀 PHD Capital Rationale Studio - Complete Deployment Guide
+# 🚀 PHD Capital rationale-studio - Complete Deployment Guide
 
 ## Server Information
 - **VPS IP:** 72.60.111.9
 - **Domain:** researchrationale.in
 - **OS:** Ubuntu 24.04 LTS
-- **Project Folder:** Rationale Studio
+- **Project Folder:** rationale-studio
 - **GitHub Repository:** https://github.com/sudiptarafdar7-spec/PHD-Capital-Rationale-Studio-v1.git
 
 ---
@@ -144,7 +144,7 @@ systemctl status phd-capital
 **Expected output:**
 
 ```
-● phd-capital.service - PHD Capital Rationale Studio
+● phd-capital.service - PHD Capital rationale-studio
    Active: active (running)
 ```
 
@@ -434,7 +434,7 @@ ssh root@72.60.111.9
 ### Step 2: Run Update Script
 
 ```bash
-cd "/var/www/Rationale Studio"
+cd "/var/www/rationale-studio"
 bash deployment/update.sh
 ```
 
@@ -496,7 +496,7 @@ systemctl restart nginx
 **Fix:**
 
 ```bash
-cd "/var/www/Rationale Studio"
+cd "/var/www/rationale-studio"
 source venv/bin/activate
 pip install -r requirements.txt --force-reinstall
 deactivate
@@ -508,7 +508,7 @@ systemctl restart phd-capital
 **Fix:**
 
 ```bash
-cd "/var/www/Rationale Studio"
+cd "/var/www/rationale-studio"
 chown -R www-data:www-data .
 chmod -R 755 .
 chmod 600 .env
@@ -568,13 +568,13 @@ certbot renew --force-renewal
 
 | File/Directory | Location |
 |----------------|----------|
-| Application Root | `/var/www/Rationale Studio/` |
-| Environment Config | `/var/www/Rationale Studio/.env` |
-| Python Virtual Env | `/var/www/Rationale Studio/venv/` |
-| React Build | `/var/www/Rationale Studio/build/` |
-| Uploaded Files | `/var/www/Rationale Studio/backend/uploaded_files/` |
-| Job Files | `/var/www/Rationale Studio/backend/job_files/` |
-| Channel Logos | `/var/www/Rationale Studio/backend/channel_logos/` |
+| Application Root | `/var/www/rationale-studio/` |
+| Environment Config | `/var/www/rationale-studio/.env` |
+| Python Virtual Env | `/var/www/rationale-studio/venv/` |
+| React Build | `/var/www/rationale-studio/build/` |
+| Uploaded Files | `/var/www/rationale-studio/backend/uploaded_files/` |
+| Job Files | `/var/www/rationale-studio/backend/job_files/` |
+| Channel Logos | `/var/www/rationale-studio/backend/channel_logos/` |
 | Systemd Service | `/etc/systemd/system/phd-capital.service` |
 | Nginx Config | `/etc/nginx/sites-available/phd-capital` |
 | Nginx Logs | `/var/log/nginx/phd-capital-*.log` |
@@ -619,7 +619,7 @@ ALTER USER phd_user WITH PASSWORD 'YourNewSecurePassword123!';
 \q
 
 # Update .env file
-nano "/var/www/Rationale Studio/.env"
+nano "/var/www/rationale-studio/.env"
 # Update DATABASE_URL and PGPASSWORD
 
 systemctl restart phd-capital
@@ -650,7 +650,7 @@ certbot renew                         # Renew certificate
 certbot certificates                  # View certificates
 
 # Updates
-cd "/var/www/Rationale Studio"
+cd "/var/www/rationale-studio"
 bash deployment/update.sh
 
 # Firewall
@@ -686,7 +686,7 @@ ufw allow 443/tcp                     # Allow HTTPS
 
 ## 🎊 Success!
 
-**Your PHD Capital Rationale Studio is now live in production!**
+**Your PHD Capital rationale-studio is now live in production!**
 
 **Production URLs:**
 - https://researchrationale.in

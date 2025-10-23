@@ -155,7 +155,7 @@ journalctl -u phd-capital -f
 systemctl restart phd-capital
 
 # Update after git push
-cd "/var/www/Rationale Studio"
+cd /var/www/rationale-studio
 bash deployment/update.sh
 ```
 
