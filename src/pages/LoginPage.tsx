@@ -46,10 +46,14 @@ export default function LoginPage({ onLoginSuccess }: LoginPageProps) {
         <div className="bg-card backdrop-blur-xl rounded-2xl border border-border shadow-2xl p-8">
           {/* Logo & Title */}
           <div className="text-center mb-8">
-            <div className="flex justify-center mb-4 bg-gradient-to-br from-slate-900 to-slate-800 rounded-xl p-6">
-              <img src={logo} alt="PHD Capital" className="w-48 h-auto max-w-full" />
+            <div className="flex justify-center mb-6">
+              <img 
+                src={logo} 
+                alt="PHD Capital" 
+                className="w-32 h-auto max-w-full dark:brightness-110"
+              />
             </div>
-            <h1 className="text-foreground mb-2">PHD Capital</h1>
+            <h1 className="text-2xl font-bold text-foreground mb-2">PHD Capital</h1>
             <p className="text-muted-foreground">Rationale Studio</p>
           </div>
 
@@ -111,10 +115,10 @@ export default function LoginPage({ onLoginSuccess }: LoginPageProps) {
           </form>
 
           {/* Demo Credentials */}
-          <div className="mt-6 p-4 bg-blue-500/10 border border-blue-500/30 rounded-lg">
-            <p className="text-xs text-blue-500 mb-2">Demo Credentials (any email/password works):</p>
-            <p className="text-xs text-muted-foreground">Email: admin@phdcapital.in</p>
-            <p className="text-xs text-muted-foreground">Password: admin123</p>
+          <div className="mt-6 p-4 bg-blue-500/10 dark:bg-blue-500/5 border border-blue-500/30 dark:border-blue-500/20 rounded-lg">
+            <p className="text-xs text-blue-600 dark:text-blue-400 mb-2 font-semibold">Default Credentials:</p>
+            <p className="text-xs text-foreground/80">Email: admin@phdcapital.in</p>
+            <p className="text-xs text-foreground/80">Password: admin123</p>
           </div>
         </div>
 
