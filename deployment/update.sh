@@ -26,6 +26,12 @@ fi
 # Navigate to project directory
 cd "$PROJECT_DIR"
 
+# Fix git ownership issue
+echo "🔧 Configuring git safe directory..."
+git config --global --add safe.directory "$PROJECT_DIR"
+echo "   ✅ Git configured"
+echo ""
+
 echo "📥 STEP 1/6: Pulling latest code from GitHub..."
 git fetch origin
 git reset --hard origin/main
