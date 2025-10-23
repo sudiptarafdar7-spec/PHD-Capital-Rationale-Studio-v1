@@ -6,12 +6,32 @@ package-lock.json
 build/
 dist/
 
-# Environment variables
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+backend/venv/
+*.egg-info/
+.pytest_cache/
+*.pyc
+
+# Environment variables (only DATABASE_URL and secrets needed)
 .env
 .env.local
 .env.*.local
 
-# Editor directories and files
+# API Keys and uploaded files (managed via database and admin panel)
+backend/api_keys/
+backend/uploaded_files/
+backend/channel_logos/
+backend/job_files/
+
+# Editor directories
 .vscode/
 .idea/
 *.swp
@@ -32,26 +52,12 @@ yarn-error.log*
 .cache/
 .vite/
 
-# Python
-__pycache__/
-*.py[cod]
-*$py.class
-*.so
-.Python
-env/
-venv/
-ENV/
-backend/venv/
-*.egg-info/
-.pytest_cache/
-
-# API Keys and sensitive files
-backend/api_keys/
-backend/uploaded_files/
-backend/channel_logos/
-backend/job_files/
-
-# Temporary files and uploads
-attached_assets/
+# Temporary files
 *.tmp
 *.temp
+attached_assets/
+
+# Replit (keep these in git for reference)
+# replit.md
+# replit.nix
+# .replit

@@ -84,7 +84,8 @@ def init_database():
         
         # Insert default row if table is empty
         cursor.execute("SELECT COUNT(*) as count FROM pdf_template")
-        count = cursor.fetchone()['count']
+        result = cursor.fetchone()
+        count = result['count'] if result else 0
         if count == 0:
             cursor.execute("""
                 INSERT INTO pdf_template (company_name, registration_details, disclaimer_text, disclosure_text, company_data, updated_at)

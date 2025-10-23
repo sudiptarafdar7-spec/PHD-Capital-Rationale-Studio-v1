@@ -53,3 +53,7 @@ The application features a clear separation between frontend and backend, built 
 - **Financial Data**: Dhan API
 - **PDF Generation**: ReportLab
 - **Image Processing**: Pillow (PIL)
+
+## Recent Changes (October 23, 2025)
+- **FRESH DEPLOYMENT SOLUTION CREATED**: Built comprehensive deployment system understanding database-based API key management. Created deployment/ folder with: deploy.sh (one-command VPS setup), update.sh (easy updates), DEPLOYMENT-GUIDE.md (complete Windows PowerShell SSH guide with step-by-step instructions), and README.md (quick reference). System uses PostgreSQL for API key storage (managed via admin panel). Fixed database.py bug (fetchone() null check). Cleaned up repository (removed build/, old deploy/, attached_assets/). Updated .gitignore properly. Ready for GitHub push to: https://github.com/sudiptarafdar7-spec/PHD-Capital-Rationale-Studio-v1.git and Hostinger VPS deployment (IP: 72.60.111.9, Domain: researchrationale.in, Folder: "Rationale Studio").
+- **CRITICAL BUG FIXES**: Fixed SavedRationalePage.tsx sonner import, removed leaked Google Cloud credentials, fixed potential null reference in database.py line 87, cleaned up temporary files, updated .gitignore.
