@@ -34,6 +34,30 @@ def fetch_video_metadata(youtube_url):
     Raises:
         Exception: If video cannot be fetched or parsed
     """
+    # Try multiple player client configurations for better success rate
+    player_clients = [
+        'android,web',  # Try Android client first (usually works best)
+        'web',          # Fallback to web only
+        'ios,web'       # Try iOS as last resort
+    ]
+    
+    last_error = None
+    
+    for player_client in player_clients:
+        try:
+            result = _fetch_with_client(youtube_url, player_client)
+            if result:
+                return result
+        except Exception as e:
+            last_error = str(e)
+            continue
+    
+    # All attempts failed
+    raise Exception(f"Failed to fetch video metadata after trying multiple methods. Last error: {last_error}")
+
+
+def _fetch_with_client(youtube_url, player_client):
+    """Helper function to fetch video with specific player client"""
     try:
         # Build yt-dlp command with enhanced YouTube bypass
         cmd = [
@@ -45,13 +69,14 @@ def fetch_video_metadata(youtube_url):
             '--no-check-certificates',
             '--geo-bypass',
             '--user-agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-            '--extractor-args', 'youtube:player_client=android,web',
+            '--extractor-args', f'youtube:player_client={player_client}',
             '--extractor-args', 'youtube:skip=dash,hls',
             '--referer', 'https://www.youtube.com/'
         ]
         
         # Note: Cookies disabled to avoid permission issues on VPS
-        # Using multiple bypass options to handle YouTube restrictions
+        # Using multiple bypass options and player clients to handle YouTube restrictions
+        print(f"  Trying player client: {player_client}")
         
         # Add the URL
         cmd.append(youtube_url)
