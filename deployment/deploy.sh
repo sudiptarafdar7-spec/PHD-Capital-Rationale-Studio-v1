@@ -266,6 +266,15 @@ chmod 600 .env
 # Run seed script to create admin user
 echo "   📦 Creating database tables and admin user..."
 source venv/bin/activate
+
+# Export environment variables for the seed script
+export DATABASE_URL="postgresql://$DB_USER:$DB_PASSWORD@localhost/$DB_NAME"
+export PGHOST=localhost
+export PGPORT=5432
+export PGDATABASE=$DB_NAME
+export PGUSER=$DB_USER
+export PGPASSWORD=$DB_PASSWORD
+
 python3.11 -m backend.seed_data
 deactivate
 
