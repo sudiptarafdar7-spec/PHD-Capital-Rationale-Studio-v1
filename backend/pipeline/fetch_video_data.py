@@ -65,7 +65,6 @@ def _fetch_with_client(youtube_url, player_client):
             '-J', 
             '--no-warnings', 
             '--skip-download',
-            '--no-cookies',  # Disable cookie saving to avoid permission errors
             '--no-check-certificates',
             '--geo-bypass',
             '--user-agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
@@ -74,7 +73,12 @@ def _fetch_with_client(youtube_url, player_client):
             '--referer', 'https://www.youtube.com/'
         ]
         
-        # Note: Cookies disabled to avoid permission issues on VPS
+        # Check if cookies file exists in job_files directory (writable location)
+        cookies_path = os.path.join('backend', 'job_files', 'youtube_cookies.txt')
+        if os.path.exists(cookies_path):
+            cmd.extend(['--cookies', cookies_path])
+            print(f"  ✓ Using cookies from: {cookies_path}")
+        
         # Using multiple bypass options and player clients to handle YouTube restrictions
         print(f"  Trying player client: {player_client}")
         

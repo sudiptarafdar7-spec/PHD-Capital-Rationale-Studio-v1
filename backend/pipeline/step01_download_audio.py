@@ -45,7 +45,6 @@ def download_audio(job_id, youtube_url, cookies_file=None):
             'no_warnings': False,
             'extract_flat': False,
             'nocheckcertificate': True,
-            'no_cookies': True,  # Disable cookie saving to avoid permission errors
             'postprocessors': [{
                 'key': 'FFmpegExtractAudio',
                 'preferredcodec': 'wav',
@@ -53,8 +52,11 @@ def download_audio(job_id, youtube_url, cookies_file=None):
             }],
         }
         
-        # Note: Cookies disabled to avoid permission issues on VPS
-        # The user_agent and player_client options should be sufficient for most videos
+        # Check for cookies file in job_files directory (writable location)
+        cookies_path = os.path.join('backend', 'job_files', 'youtube_cookies.txt')
+        if os.path.exists(cookies_path):
+            ydl_opts['cookiefile'] = cookies_path
+            print(f"✓ Using cookies for authentication")
         
         # Add options to avoid bot detection and 403 errors
         ydl_opts.update({
