@@ -42,14 +42,16 @@ def fetch_video_metadata(youtube_url):
             '--no-warnings', 
             '--skip-download',
             '--no-cookies',  # Disable cookie saving to avoid permission errors
+            '--no-check-certificates',
+            '--geo-bypass',
             '--user-agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
             '--extractor-args', 'youtube:player_client=android,web',
-            '--extractor-args', 'youtube:skip=dash,hls'
+            '--extractor-args', 'youtube:skip=dash,hls',
+            '--referer', 'https://www.youtube.com/'
         ]
         
         # Note: Cookies disabled to avoid permission issues on VPS
-        # If you need cookies for authentication, create a writable directory
-        # and configure yt-dlp to save cookies there
+        # Using multiple bypass options to handle YouTube restrictions
         
         # Add the URL
         cmd.append(youtube_url)
@@ -64,11 +66,14 @@ def fetch_video_metadata(youtube_url):
         
         if result.returncode != 0:
             error_msg = result.stderr
-            # Provide helpful error message if cookies are needed
+            # Provide helpful error message
             if "Sign in to confirm" in error_msg or "bot" in error_msg.lower():
                 raise Exception(
-                    "YouTube requires authentication. Please create a youtube_cookies.txt file in the backend/ directory. "
-                    "You can export cookies using a browser extension like 'Get cookies.txt LOCALLY' from youtube.com"
+                    "YouTube is blocking this request. This may be due to: "
+                    "1) Age-restricted or private video, "
+                    "2) Geographic restrictions, or "
+                    "3) YouTube's bot detection. "
+                    "Please try a different video or check if the video is publicly accessible."
                 )
             raise Exception(f"yt-dlp failed: {error_msg}")
         

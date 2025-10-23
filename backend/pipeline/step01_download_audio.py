@@ -59,6 +59,11 @@ def download_audio(job_id, youtube_url, cookies_file=None):
         # Add options to avoid bot detection and 403 errors
         ydl_opts.update({
             'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'geo_bypass': True,
+            'nocheckcertificate': True,
+            'http_headers': {
+                'Referer': 'https://www.youtube.com/',
+            },
             'extractor_args': {
                 'youtube': {
                     'player_client': ['android', 'web'],

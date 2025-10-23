@@ -89,6 +89,9 @@ def download_captions(job_id, youtube_url, cookies_file=None):
             "--sub-lang", "hi,en",  # Try Hindi first, then English
             "--sub-format", "json3/vtt/srt",
             "--no-cookies",  # Disable cookie saving to avoid permission errors
+            "--no-check-certificates",
+            "--geo-bypass",
+            "--referer", "https://www.youtube.com/",
             "-o", os.path.join(captions_folder, "youtube.%(ext)s"),
             youtube_url
         ]
