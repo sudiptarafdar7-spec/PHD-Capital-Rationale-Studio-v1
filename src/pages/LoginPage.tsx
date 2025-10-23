@@ -66,7 +66,7 @@ export default function LoginPage({ onLoginSuccess }: LoginPageProps) {
               <Input
                 id="email"
                 type="email"
-                placeholder="admin@phdcapital.in"
+                placeholder="Enter email address"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
