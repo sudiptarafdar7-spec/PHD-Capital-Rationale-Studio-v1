@@ -1,6 +1,7 @@
 """
 Step 1: Download Audio from YouTube Video
 Uses yt-dlp to extract audio and converts to 16kHz mono WAV format
+Updated with 2025 bot-blocking bypass techniques
 """
 import os
 import subprocess
@@ -38,6 +39,7 @@ def download_audio(job_id, youtube_url, cookies_file=None):
         # Step 1: Download audio using yt-dlp
         print(f"🎧 Downloading audio from YouTube: {youtube_url}")
         
+        # Updated yt-dlp options to bypass 2025 bot blocking
         ydl_opts = {
             'format': 'bestaudio/best',
             'outtmpl': os.path.join(audio_folder, 'temp_audio.%(ext)s'),
@@ -49,27 +51,43 @@ def download_audio(job_id, youtube_url, cookies_file=None):
                 'preferredcodec': 'wav',
                 'preferredquality': '192',
             }],
-        }
-        
-        # Add cookies if available (for bot detection / 403 errors)
-        if cookies_file and os.path.exists(cookies_file):
-            ydl_opts['cookiefile'] = cookies_file
-            print(f"✓ Using cookies file for authentication")
-        
-        # Add options to avoid bot detection and 403 errors
-        ydl_opts.update({
-            'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            # 2025 Bot Blocking Bypass - User Agent Spoofing
+            'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36',
+            # Use browser cookies for authenticated session (most reliable)
+            'cookiesfrombrowser': ('firefox',),  # Automatically extract cookies from Firefox
+            # Advanced extractor arguments
             'extractor_args': {
                 'youtube': {
                     'player_client': ['android', 'web'],
                     'player_skip': ['webpage', 'config'],
                 }
             },
-        })
+            # Additional anti-bot measures
+            'nocheckcertificate': True,
+            'geo_bypass': True,
+        }
+        
+        # Override with cookies file if explicitly provided
+        if cookies_file and os.path.exists(cookies_file):
+            del ydl_opts['cookiesfrombrowser']  # Remove auto-extract
+            ydl_opts['cookiefile'] = cookies_file
+            print(f"✓ Using provided cookies file: {cookies_file}")
+        else:
+            print(f"✓ Auto-extracting cookies from Firefox browser")
         
         # Download audio
-        with YoutubeDL(ydl_opts) as ydl:
-            ydl.download([youtube_url])
+        try:
+            with YoutubeDL(ydl_opts) as ydl:
+                ydl.download([youtube_url])
+        except Exception as e:
+            # Fallback: Try without browser cookies if auto-extract fails
+            if 'cookiesfrombrowser' in ydl_opts:
+                print(f"⚠️ Browser cookie extraction failed, retrying without cookies...")
+                del ydl_opts['cookiesfrombrowser']
+                with YoutubeDL(ydl_opts) as ydl:
+                    ydl.download([youtube_url])
+            else:
+                raise e
         
         # Check if download succeeded
         if not os.path.exists(temp_audio):
