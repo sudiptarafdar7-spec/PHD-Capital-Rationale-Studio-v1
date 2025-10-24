@@ -51,43 +51,60 @@ def download_audio(job_id, youtube_url, cookies_file=None):
                 'preferredcodec': 'wav',
                 'preferredquality': '192',
             }],
-            # 2025 Bot Blocking Bypass - User Agent Spoofing
+            # 2025 Bot Blocking Bypass - Updated User Agent
             'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36',
-            # Use browser cookies for authenticated session (most reliable)
-            'cookiesfrombrowser': ('firefox',),  # Automatically extract cookies from Firefox
-            # Advanced extractor arguments
+            # Use the best available client
             'extractor_args': {
                 'youtube': {
-                    'player_client': ['android', 'web'],
-                    'player_skip': ['webpage', 'config'],
+                    'player_client': ['ios', 'web'],
+                    'player_skip': ['webpage'],
                 }
             },
             # Additional anti-bot measures
             'nocheckcertificate': True,
             'geo_bypass': True,
+            # Use age_limit to avoid restrictions
+            'age_limit': None,
         }
         
-        # Override with cookies file if explicitly provided
+        # Add cookies file if explicitly provided
         if cookies_file and os.path.exists(cookies_file):
-            del ydl_opts['cookiesfrombrowser']  # Remove auto-extract
             ydl_opts['cookiefile'] = cookies_file
             print(f"✓ Using provided cookies file: {cookies_file}")
-        else:
-            print(f"✓ Auto-extracting cookies from Firefox browser")
         
-        # Download audio
+        # Download audio with fallback
+        download_successful = False
+        error_msg = None
+        
         try:
             with YoutubeDL(ydl_opts) as ydl:
                 ydl.download([youtube_url])
+            download_successful = True
         except Exception as e:
-            # Fallback: Try without browser cookies if auto-extract fails
-            if 'cookiesfrombrowser' in ydl_opts:
-                print(f"⚠️ Browser cookie extraction failed, retrying without cookies...")
-                del ydl_opts['cookiesfrombrowser']
+            error_msg = str(e)
+            print(f"⚠️ Primary download method failed: {error_msg}")
+            
+            # Fallback: Try with different client settings
+            print(f"🔄 Trying fallback method with android client...")
+            ydl_opts['extractor_args'] = {
+                'youtube': {
+                    'player_client': ['android'],
+                }
+            }
+            
+            try:
                 with YoutubeDL(ydl_opts) as ydl:
                     ydl.download([youtube_url])
-            else:
-                raise e
+                download_successful = True
+                print("✓ Fallback method succeeded!")
+            except Exception as e2:
+                error_msg = f"Both methods failed. Primary: {error_msg}, Fallback: {str(e2)}"
+        
+        if not download_successful:
+            return {
+                'success': False,
+                'error': f'Audio download error: {error_msg}'
+            }
         
         # Check if download succeeded
         if not os.path.exists(temp_audio):
