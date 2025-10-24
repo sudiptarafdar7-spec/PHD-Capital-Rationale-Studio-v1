@@ -1,7 +1,6 @@
 """
 Step 1: Download Audio from YouTube Video
 Uses yt-dlp to extract audio and converts to 16kHz mono WAV format
-Updated with 2025 bot-blocking bypass techniques
 """
 import os
 import subprocess
@@ -39,7 +38,6 @@ def download_audio(job_id, youtube_url, cookies_file=None):
         # Step 1: Download audio using yt-dlp
         print(f"🎧 Downloading audio from YouTube: {youtube_url}")
         
-        # Updated yt-dlp options to bypass 2025 bot blocking
         ydl_opts = {
             'format': 'bestaudio/best',
             'outtmpl': os.path.join(audio_folder, 'temp_audio.%(ext)s'),
@@ -51,60 +49,27 @@ def download_audio(job_id, youtube_url, cookies_file=None):
                 'preferredcodec': 'wav',
                 'preferredquality': '192',
             }],
-            # 2025 Bot Blocking Bypass - Updated User Agent
-            'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36',
-            # Use the best available client
-            'extractor_args': {
-                'youtube': {
-                    'player_client': ['ios', 'web'],
-                    'player_skip': ['webpage'],
-                }
-            },
-            # Additional anti-bot measures
-            'nocheckcertificate': True,
-            'geo_bypass': True,
-            # Use age_limit to avoid restrictions
-            'age_limit': None,
         }
         
-        # Add cookies file if explicitly provided
+        # Add cookies if available (for bot detection / 403 errors)
         if cookies_file and os.path.exists(cookies_file):
             ydl_opts['cookiefile'] = cookies_file
-            print(f"✓ Using provided cookies file: {cookies_file}")
+            print(f"✓ Using cookies file for authentication")
         
-        # Download audio with fallback
-        download_successful = False
-        error_msg = None
-        
-        try:
-            with YoutubeDL(ydl_opts) as ydl:
-                ydl.download([youtube_url])
-            download_successful = True
-        except Exception as e:
-            error_msg = str(e)
-            print(f"⚠️ Primary download method failed: {error_msg}")
-            
-            # Fallback: Try with different client settings
-            print(f"🔄 Trying fallback method with android client...")
-            ydl_opts['extractor_args'] = {
+        # Add options to avoid bot detection and 403 errors
+        ydl_opts.update({
+            'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'extractor_args': {
                 'youtube': {
-                    'player_client': ['android'],
+                    'player_client': ['android', 'web'],
+                    'player_skip': ['webpage', 'config'],
                 }
-            }
-            
-            try:
-                with YoutubeDL(ydl_opts) as ydl:
-                    ydl.download([youtube_url])
-                download_successful = True
-                print("✓ Fallback method succeeded!")
-            except Exception as e2:
-                error_msg = f"Both methods failed. Primary: {error_msg}, Fallback: {str(e2)}"
+            },
+        })
         
-        if not download_successful:
-            return {
-                'success': False,
-                'error': f'Audio download error: {error_msg}'
-            }
+        # Download audio
+        with YoutubeDL(ydl_opts) as ydl:
+            ydl.download([youtube_url])
         
         # Check if download succeeded
         if not os.path.exists(temp_audio):

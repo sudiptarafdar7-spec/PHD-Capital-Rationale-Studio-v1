@@ -43,8 +43,7 @@ The application features a clear separation between frontend and backend, built 
 - **Authentication**: Flask-JWT-Extended
 - **Password Hashing**: bcrypt
 - **CORS Management**: Flask-CORS
-- **Video Processing**: `yt-dlp` (with 2025 bot-blocking bypass)
-- **Caption Fetching**: `youtube-transcript-api` (reliable auto-caption extraction)
+- **Video Processing**: `yt-dlp`
 - **Audio Processing**: `ffmpeg-python`
 - **Transcription**: AssemblyAI API
 - **Data Processing**: pandas, numpy
@@ -54,10 +53,6 @@ The application features a clear separation between frontend and backend, built 
 - **Financial Data**: Dhan API
 - **PDF Generation**: ReportLab
 - **Image Processing**: Pillow (PIL)
-
-## Recent Changes (October 24, 2025)
-- **YOUTUBE BOT BLOCKING FIX**: Implemented comprehensive solution to bypass YouTube's 2025 bot protection that was causing HTTP 403 errors. Updated Step 1 (Audio Download) with ios/android client fallback, improved user-agent spoofing, and robust error handling. Completely replaced Step 2 (Caption Download) with youtube-transcript-api library for reliable auto-generated caption fetching (works for Hindi, English, and other languages). Both steps now have intelligent fallback mechanisms and detailed error logging. This resolves all "ERROR: unable to download video data: HTTP Error 403: Forbidden" issues.
-- **LOGIN PAGE POLISH**: Finalized login page design with compact 80px logo, enabled dark mode theme, removed default credentials display box, and updated email placeholder to "Enter email address" for a clean, professional appearance.
 
 ## Recent Changes (October 23, 2025)
 - **BULLETPROOF DEPLOYMENT SOLUTION CREATED**: Completely rebuilt deployment system from scratch to handle all production issues. New deployment/ folder includes: deploy.sh (fully automated one-command VPS setup with Python 3.11, all system dependencies, automatic admin user creation), update.sh (one-command updates from git), DEPLOYMENT-GUIDE.md (comprehensive Windows PowerShell SSH guide), and README.md (quick command reference). Deployment script now: installs Python 3.11 from deadsnakes PPA, installs libpq-dev and postgresql-server-dev-all for psycopg2, exports environment variables for seed script to fix database connection, automatically runs seed script to create admin user, generates secure environment keys, sets up systemd service and Nginx reverse proxy. Tested frontend build successfully (14s, 2552 modules). Ready for production deployment to Hostinger VPS (IP: 72.60.111.9, Domain: researchrationale.in, Path: /var/www/rationale-studio).
