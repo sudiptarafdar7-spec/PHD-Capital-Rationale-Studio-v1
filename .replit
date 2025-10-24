@@ -4,7 +4,7 @@ expertMode = true
 
 [nix]
 channel = "stable-25_05"
-packages = ["cairo", "cargo", "ffmpeg-full", "freetype", "ghostscript", "glibcLocales", "gobject-introspection", "gtk3", "lcms2", "libiconv", "libimagequant", "libjpeg", "libtiff", "libwebp", "libxcrypt", "openjpeg", "pkg-config", "qhull", "rapidfuzz-cpp", "rustc", "taskflow", "tcl", "tk", "yt-dlp", "zlib", "systemdUkify"]
+packages = ["cairo", "cargo", "ffmpeg-full", "freetype", "ghostscript", "glibcLocales", "gobject-introspection", "gtk3", "lcms2", "libiconv", "libimagequant", "libjpeg", "libtiff", "libwebp", "libxcrypt", "openjpeg", "pkg-config", "qhull", "rapidfuzz-cpp", "rustc", "taskflow", "tcl", "tk", "yt-dlp", "zlib"]
 
 [workflows]
 runButton = "Project"
@@ -65,6 +65,10 @@ externalPort = 3003
 [[ports]]
 localPort = 38633
 externalPort = 3002
+
+[[ports]]
+localPort = 38665
+externalPort = 5173
 
 [[ports]]
 localPort = 38827
