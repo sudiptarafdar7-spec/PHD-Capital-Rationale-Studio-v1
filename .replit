@@ -82,6 +82,10 @@ externalPort = 4200
 localPort = 44175
 externalPort = 5000
 
+[[ports]]
+localPort = 44305
+externalPort = 6000
+
 [deployment]
 deploymentTarget = "cloudrun"
 run = ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "2", "--timeout", "120", "backend.app:create_app()"]
