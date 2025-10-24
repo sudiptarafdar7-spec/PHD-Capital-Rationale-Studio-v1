@@ -24,28 +24,31 @@ def get_dhan_api_key():
     try:
         conn = psycopg2.connect(os.environ['DATABASE_URL'])
         cursor = conn.cursor()
-        
+
         cursor.execute("""
             SELECT key_value 
             FROM api_keys 
             WHERE LOWER(provider) = 'dhan'
             LIMIT 1
         """)
-        
+
         result = cursor.fetchone()
         cursor.close()
         conn.close()
-        
+
         if result:
             return result[0]
         else:
-            raise ValueError("Dhan API key not found in database. Please add it in API Keys settings.")
-    
+            raise ValueError(
+                "Dhan API key not found in database. Please add it in API Keys settings."
+            )
+
     except Exception as e:
         raise Exception(f"Failed to fetch Dhan API key: {str(e)}")
 
 
-def fetch_cmp_from_dhan(api_key, security_id, exchange, segment, instrument, dt):
+def fetch_cmp_from_dhan(api_key, security_id, exchange, segment, instrument,
+                        dt):
     """
     Fetch CMP from Dhan API for a specific stock at a specific time
     
@@ -61,31 +64,31 @@ def fetch_cmp_from_dhan(api_key, security_id, exchange, segment, instrument, dt)
         float: Current Market Price or None
     """
     url = "https://api.dhan.co/v2/charts/intraday"
-    
+
     headers = {
         "accept": "application/json",
         "content-type": "application/json",
         "access-token": api_key
     }
-    
+
     try:
         # Format datetime range (mentioned time + 10 minutes) - HH:MM:00 format
         from_date = dt.strftime("%Y-%m-%d %H:%M:00")
         to_date = (dt + timedelta(minutes=10)).strftime("%Y-%m-%d %H:%M:00")
-        
+
         # Exchange segment formatting
         exchange = str(exchange).upper()
         segment = str(segment).upper()
         instrument = str(instrument).upper()
-        
+
         if instrument == "EQUITY":
             exchange_segment = f"{exchange}_EQ"
         else:
             exchange_segment = f"{exchange}_{segment}"
-        
+
         # Remove .0 if security_id is float-like
         security_id_str = str(security_id).split(".")[0]
-        
+
         # API payload
         payload = {
             "securityId": security_id_str,
@@ -96,20 +99,23 @@ def fetch_cmp_from_dhan(api_key, security_id, exchange, segment, instrument, dt)
             "fromDate": from_date,
             "toDate": to_date
         }
-        
+
         # Make API request
-        response = requests.post(url, headers=headers, json=payload, timeout=10)
+        response = requests.post(url,
+                                 headers=headers,
+                                 json=payload,
+                                 timeout=10)
         response.raise_for_status()
-        
+
         data = response.json()
-        
+
         # Extract CMP from response
         if "close" in data and len(data["close"]) > 0:
             cmp_value = data["close"][0]
             return cmp_value
         else:
             return None
-    
+
     except Exception as e:
         print(f"    ⚠️ API error: {str(e)}")
         return None
@@ -125,129 +131,130 @@ def run(job_folder):
     Returns:
         dict: Status, message, and output files
     """
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("STEP 11: Fetch CMP from Dhan API")
     print(f"{'='*60}\n")
 
     try:
         # Input/Output paths
-        input_csv = os.path.join(job_folder, "analysis", "stocks_with_date_time.csv")
-        output_csv = os.path.join(job_folder, "analysis", "stocks_with_cmp.csv")
-        
+        input_csv = os.path.join(job_folder, "analysis",
+                                 "stocks_with_date_time.csv")
+        output_csv = os.path.join(job_folder, "analysis",
+                                  "stocks_with_cmp.csv")
+
         # Verify input file exists
         if not os.path.exists(input_csv):
             return {
                 'status': 'failed',
                 'message': f'Stocks with date/time file not found: {input_csv}'
             }
-        
+
         # Get Dhan API key from database
         print("🔑 Retrieving Dhan API key from database...")
         api_key = get_dhan_api_key()
         print(f"✅ Dhan API key found\n")
-        
+
         # Load stocks file
         print("📖 Loading stocks with date/time...")
         df = pd.read_csv(input_csv)
         print(f"✅ Loaded {len(df)} stocks\n")
-        
+
         # Ensure CMP column exists
         if "CMP" not in df.columns:
             df["CMP"] = None
-        
+
         # Fetch CMP for each stock
         print("💹 Fetching Current Market Prices from Dhan API...")
         print("-" * 60)
-        
+
         success_count = 0
         failed_count = 0
-        
+
         for i, row in df.iterrows():
             try:
                 # Parse datetime from DATE and START TIME (HH:MM:00 format)
                 dt_str = f"{row['DATE']} {row['START TIME']}"
                 dt = datetime.strptime(dt_str, "%Y-%m-%d %H:%M:00")
-                
+
                 stock_symbol = row.get("STOCK SYMBOL", "")
                 security_id = row.get("SECURITY ID", "")
                 exchange = row.get("EXCHANGE", "")
                 segment = row.get("SEGMENT", "")
                 instrument = row.get("INSTRUMENT", "")
-                
+
                 # Skip if missing required data
-                if not security_id or pd.isna(security_id) or str(security_id).strip() == "":
-                    print(f"  ⚠️ {stock_symbol:15} | Missing Security ID, skipping")
+                if not security_id or pd.isna(security_id) or str(
+                        security_id).strip() == "":
+                    print(
+                        f"  ⚠️ {stock_symbol:15} | Missing Security ID, skipping"
+                    )
                     failed_count += 1
                     continue
-                
+
                 # Fetch CMP from Dhan API
-                cmp_value = fetch_cmp_from_dhan(
-                    api_key, 
-                    security_id, 
-                    exchange, 
-                    segment, 
-                    instrument, 
-                    dt
-                )
-                
+                cmp_value = fetch_cmp_from_dhan(api_key, security_id, exchange,
+                                                segment, instrument, dt)
+
                 if cmp_value is not None:
                     df.at[i, "CMP"] = cmp_value
-                    print(f"  ✅ {stock_symbol:15} | CMP: ₹{cmp_value:,.2f} @ {dt_str}")
+                    print(
+                        f"  ✅ {stock_symbol:15} | CMP: ₹{cmp_value:,.2f} @ {dt_str}"
+                    )
                     success_count += 1
                 else:
-                    print(f"  ⚠️ {stock_symbol:15} | No data available @ {dt_str}")
+                    print(
+                        f"  ⚠️ {stock_symbol:15} | No data available @ {dt_str}"
+                    )
                     failed_count += 1
-                
+
                 # Add delay to avoid API rate limiting (429 errors)
                 time.sleep(1.5)
-            
+
             except Exception as e:
                 stock_symbol = row.get("STOCK SYMBOL", f"Row {i}")
                 print(f"  ❌ {stock_symbol:15} | Error: {str(e)}")
                 failed_count += 1
-        
+
         print("-" * 60)
         print(f"\n📊 CMP Fetch Summary:")
         print(f"   Total stocks: {len(df)}")
         print(f"   Successfully fetched: {success_count}")
         print(f"   Failed/No data: {failed_count}\n")
-        
+
         # Reorder columns
         final_cols = [
             "STOCK NAME", "STOCK SYMBOL", "LISTED NAME", "SHORT NAME",
-            "SECURITY ID", "EXCHANGE", "INSTRUMENT", "SEGMENT",
-            "START TIME", "DATE", "CMP"
+            "SECURITY ID", "EXCHANGE", "INSTRUMENT", "SEGMENT", "START TIME",
+            "DATE", "CMP"
         ]
-        
+
         # Only include columns that exist
         final_cols = [col for col in final_cols if col in df.columns]
         df = df.reindex(columns=final_cols)
-        
+
         # Save output
         print(f"💾 Saving CMP data to: {output_csv}")
-        
+
         # Ensure analysis directory exists
         os.makedirs(os.path.dirname(output_csv), exist_ok=True)
-        
+
         df.to_csv(output_csv, index=False)
-        
+
         print(f"✅ Saved {len(df)} records")
         print(f"✅ Output: analysis/stocks_with_cmp.csv\n")
-        
+
         return {
             'status': 'success',
-            'message': f'Fetched CMP for {success_count} of {len(df)} stocks from Dhan API',
+            'message':
+            f'Fetched CMP for {success_count} of {len(df)} stocks from Dhan API',
             'output_files': ['analysis/stocks_with_cmp.csv']
         }
-    
+
     except Exception as e:
         print(f"\n❌ Error: {str(e)}")
         import traceback
         traceback.print_exc()
-        return {
-            'status': 'failed',
-            'message': f'CMP fetch failed: {str(e)}'
-        }
+        return {'status': 'failed', 'message': f'CMP fetch failed: {str(e)}'}
 
 
 if __name__ == "__main__":
@@ -257,7 +264,7 @@ if __name__ == "__main__":
         test_folder = sys.argv[1]
     else:
         test_folder = "backend/job_files/test_job"
-    
+
     result = run(test_folder)
     print(f"\n{'='*60}")
     print(f"Result: {result['status'].upper()}")
