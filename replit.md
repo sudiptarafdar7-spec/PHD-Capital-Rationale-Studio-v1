@@ -43,18 +43,33 @@ The application features a clear separation between frontend and backend, built 
 - **Authentication**: Flask-JWT-Extended
 - **Password Hashing**: bcrypt
 - **CORS Management**: Flask-CORS
-- **Video Processing**: `yt-dlp`
+- **Video Metadata**: YouTube Data API v3 (for fetching video metadata)
+- **Video Processing**: `yt-dlp` (for downloading audio and captions)
 - **Audio Processing**: `ffmpeg-python`
 - **Transcription**: AssemblyAI API
-- **Data Processing**: pandas, numpy
+- **Data Processing**: pandas, numpy, isodate (for ISO 8601 duration parsing)
 - **Translation**: Google Cloud Translation API
 - **UI Icons**: Lucide React
 - **AI Analysis**: OpenAI API (GPT-4o for speaker detection and analysis)
 - **Financial Data**: Dhan API
 - **PDF Generation**: ReportLab
 - **Image Processing**: Pillow (PIL)
+- **HTTP Requests**: requests library
 
-## Recent Changes (October 23, 2025)
+## Recent Changes
+
+### October 25, 2025
+- **YOUTUBE DATA API v3 MIGRATION**: Migrated video metadata fetching from yt-dlp to YouTube Data API v3 for improved reliability and performance. Changes include:
+  - Added YouTube Data API v3 field to API Keys page (frontend)
+  - Updated `fetch_video_data.py` to use YouTube Data API v3 instead of yt-dlp for metadata extraction
+  - Installed `isodate` Python package for parsing ISO 8601 duration format
+  - API key is securely stored in the database and retrieved during video metadata fetching
+  - All metadata fields preserved (video_id, title, channel_name, upload_date, upload_time, duration, thumbnail, description)
+  - Timezone conversion from UTC to IST maintained
+  - Proper error handling for missing API keys, invalid URLs, and API failures
+  - Note: yt-dlp is still used for downloading audio and captions as per the existing pipeline
+
+### October 23, 2025
 - **BULLETPROOF DEPLOYMENT SOLUTION CREATED**: Completely rebuilt deployment system from scratch to handle all production issues. New deployment/ folder includes: deploy.sh (fully automated one-command VPS setup with Python 3.11, all system dependencies, automatic admin user creation), update.sh (one-command updates from git), DEPLOYMENT-GUIDE.md (comprehensive Windows PowerShell SSH guide), and README.md (quick command reference). Deployment script now: installs Python 3.11 from deadsnakes PPA, installs libpq-dev and postgresql-server-dev-all for psycopg2, exports environment variables for seed script to fix database connection, automatically runs seed script to create admin user, generates secure environment keys, sets up systemd service and Nginx reverse proxy. Tested frontend build successfully (14s, 2552 modules). Ready for production deployment to Hostinger VPS (IP: 72.60.111.9, Domain: researchrationale.in, Path: /var/www/rationale-studio).
 - **DEPLOYMENT FIX**: Fixed systemd error 203/EXEC by removing space from directory name. Changed from "Rationale Studio" to "rationale-studio" throughout codebase.
 - **CRITICAL BUG FIXES**: Fixed SavedRationalePage.tsx sonner import, removed leaked Google Cloud credentials, fixed potential null reference in database.py line 87, cleaned up temporary files, updated .gitignore.
