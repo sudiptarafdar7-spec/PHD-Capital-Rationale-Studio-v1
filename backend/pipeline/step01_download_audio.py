@@ -1,15 +1,29 @@
 """
 Step 1: Download Audio from YouTube Video
 Uses yt-dlp to extract audio and converts to 16kHz mono WAV format
+Bulletproof implementation with caching, retry logic, and robust error handling
 """
 import os
 import subprocess
+import time
+import random
 from yt_dlp import YoutubeDL
+
+
+# Multiple user agents to rotate through for better reliability
+USER_AGENTS = [
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36',
+    'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36',
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:120.0) Gecko/20100101 Firefox/120.0',
+    'Mozilla/5.0 (Linux; Android 13; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36',
+]
 
 
 def download_audio(job_id, youtube_url, cookies_file=None):
     """
-    Download audio from YouTube video and convert to 16 kHz mono WAV
+    Bulletproof audio download with caching and retry logic.
+    Download audio from YouTube video and convert to 16 kHz mono WAV.
     
     Args:
         job_id: Job identifier
@@ -35,54 +49,106 @@ def download_audio(job_id, youtube_url, cookies_file=None):
         prepared_audio_path = os.path.join(audio_folder, 'audio_16k_mono.wav')
         temp_audio = os.path.join(audio_folder, 'temp_audio.wav')
         
-        # Step 1: Download audio using yt-dlp
+        # ===== CACHING: Check if audio already exists =====
+        if os.path.exists(prepared_audio_path) and os.path.exists(raw_audio_path):
+            print(f"✓ Audio already exists in cache, skipping download")
+            raw_size = os.path.getsize(raw_audio_path) / (1024 * 1024)
+            prepared_size = os.path.getsize(prepared_audio_path) / (1024 * 1024)
+            
+            return {
+                'success': True,
+                'raw_audio': raw_audio_path,
+                'prepared_audio': prepared_audio_path,
+                'raw_size_mb': round(raw_size, 2),
+                'prepared_size_mb': round(prepared_size, 2),
+                'error': None
+            }
+        
+        # ===== STEP 1: Download audio using yt-dlp with retry logic =====
         print(f"🎧 Downloading audio from YouTube: {youtube_url}")
         
-        ydl_opts = {
-            'format': 'bestaudio/best',
-            'outtmpl': os.path.join(audio_folder, 'temp_audio.%(ext)s'),
-            'quiet': False,
-            'no_warnings': False,
-            'extract_flat': False,
-            'postprocessors': [{
-                'key': 'FFmpegExtractAudio',
-                'preferredcodec': 'wav',
-                'preferredquality': '192',
-            }],
-        }
+        max_retries = 3
+        retry_delay = 2  # seconds
+        download_success = False
+        last_error = None
         
-        # Add cookies if available (for bot detection / 403 errors)
-        if cookies_file and os.path.exists(cookies_file):
-            ydl_opts['cookiefile'] = cookies_file
-            print(f"✓ Using cookies file for authentication")
-        
-        # Add options to avoid bot detection and 403 errors
-        ydl_opts.update({
-            'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-            'extractor_args': {
-                'youtube': {
-                    'player_client': ['android', 'web'],
-                    'player_skip': ['webpage', 'config'],
+        for attempt in range(1, max_retries + 1):
+            try:
+                print(f"  Attempt {attempt}/{max_retries}...")
+                
+                # Randomize user agent for each attempt
+                user_agent = random.choice(USER_AGENTS)
+                
+                ydl_opts = {
+                    'format': 'bestaudio/best',
+                    'outtmpl': os.path.join(audio_folder, 'temp_audio.%(ext)s'),
+                    'quiet': True,
+                    'no_warnings': True,
+                    'extract_flat': False,
+                    'socket_timeout': 30,  # 30 second timeout
+                    'retries': 3,  # Internal yt-dlp retries
+                    'fragment_retries': 3,
+                    'postprocessors': [{
+                        'key': 'FFmpegExtractAudio',
+                        'preferredcodec': 'wav',
+                        'preferredquality': '192',
+                    }],
+                    'user_agent': user_agent,
+                    'extractor_args': {
+                        'youtube': {
+                            'player_client': ['android', 'web', 'ios'],
+                            'player_skip': ['webpage', 'config'],
+                        }
+                    },
                 }
-            },
-        })
+                
+                # Add cookies if available
+                if cookies_file and os.path.exists(cookies_file):
+                    ydl_opts['cookiefile'] = cookies_file
+                    if attempt == 1:
+                        print(f"  ✓ Using cookies file for authentication")
+                
+                # Attempt download
+                with YoutubeDL(ydl_opts) as ydl:
+                    ydl.download([youtube_url])
+                
+                # Check if download succeeded
+                if os.path.exists(temp_audio):
+                    download_success = True
+                    print(f"  ✓ Download successful on attempt {attempt}")
+                    break
+                else:
+                    last_error = f"Temp audio file not created (attempt {attempt})"
+                    print(f"  ⚠️ {last_error}")
+                
+            except Exception as e:
+                last_error = str(e)
+                print(f"  ⚠️ Attempt {attempt} failed: {last_error}")
+                
+                # Wait before retrying (exponential backoff)
+                if attempt < max_retries:
+                    wait_time = retry_delay * (2 ** (attempt - 1))  # 2s, 4s, 8s
+                    print(f"  ⏳ Waiting {wait_time}s before retry...")
+                    time.sleep(wait_time)
         
-        # Download audio
-        with YoutubeDL(ydl_opts) as ydl:
-            ydl.download([youtube_url])
-        
-        # Check if download succeeded
-        if not os.path.exists(temp_audio):
+        # If all retries failed
+        if not download_success:
             return {
                 'success': False,
-                'error': 'Failed to download audio file from YouTube'
+                'error': f'Failed to download audio after {max_retries} attempts. Last error: {last_error}',
+                'raw_audio': '',
+                'prepared_audio': '',
+                'raw_size_mb': 0,
+                'prepared_size_mb': 0
             }
         
         # Rename to raw_audio.wav
+        if os.path.exists(raw_audio_path):
+            os.remove(raw_audio_path)
         os.rename(temp_audio, raw_audio_path)
         print(f"✓ Audio downloaded: {raw_audio_path}")
         
-        # Step 2: Convert to 16 kHz mono using ffmpeg
+        # ===== STEP 2: Convert to 16 kHz mono using ffmpeg =====
         print(f"🔊 Converting to 16 kHz mono WAV for transcription...")
         
         ffmpeg_cmd = [
@@ -91,25 +157,35 @@ def download_audio(job_id, youtube_url, cookies_file=None):
             '-ar', '16000',  # 16 kHz sample rate (required for AssemblyAI)
             '-ac', '1',       # mono (1 channel)
             '-y',             # overwrite output file if exists
+            '-loglevel', 'error',  # Only show errors
             prepared_audio_path
         ]
         
         result = subprocess.run(
             ffmpeg_cmd,
             capture_output=True,
-            text=True
+            text=True,
+            timeout=300  # 5 minute timeout for ffmpeg
         )
         
         if result.returncode != 0:
             return {
                 'success': False,
-                'error': f'FFmpeg conversion failed: {result.stderr}'
+                'error': f'FFmpeg conversion failed: {result.stderr}',
+                'raw_audio': raw_audio_path,
+                'prepared_audio': '',
+                'raw_size_mb': 0,
+                'prepared_size_mb': 0
             }
         
         if not os.path.exists(prepared_audio_path):
             return {
                 'success': False,
-                'error': 'Prepared audio file was not created'
+                'error': 'Prepared audio file was not created by FFmpeg',
+                'raw_audio': raw_audio_path,
+                'prepared_audio': '',
+                'raw_size_mb': 0,
+                'prepared_size_mb': 0
             }
         
         print(f"✓ Audio prepared: {prepared_audio_path}")
@@ -127,8 +203,21 @@ def download_audio(job_id, youtube_url, cookies_file=None):
             'error': None
         }
         
+    except subprocess.TimeoutExpired:
+        return {
+            'success': False,
+            'error': 'FFmpeg conversion timeout (exceeded 5 minutes)',
+            'raw_audio': '',
+            'prepared_audio': '',
+            'raw_size_mb': 0,
+            'prepared_size_mb': 0
+        }
     except Exception as e:
         return {
             'success': False,
-            'error': f'Audio download error: {str(e)}'
+            'error': f'Audio download error: {str(e)}',
+            'raw_audio': '',
+            'prepared_audio': '',
+            'raw_size_mb': 0,
+            'prepared_size_mb': 0
         }
