@@ -137,6 +137,103 @@ def upload_google_cloud_json():
         print(f"Error uploading Google Cloud JSON: {e}")
         return jsonify({'error': str(e)}), 500
 
+@api_keys_bp.route('/upload-cookies', methods=['POST'])
+@jwt_required()
+def upload_youtube_cookies():
+    """Upload YouTube cookies.txt file for VPS bot detection bypass"""
+    try:
+        current_user = get_current_user()
+        if not current_user or current_user['role'] != 'admin':
+            return jsonify({'error': 'Admin access required'}), 403
+        
+        if 'file' not in request.files:
+            return jsonify({'error': 'No file provided'}), 400
+        
+        file = request.files['file']
+        
+        if file.filename == '':
+            return jsonify({'error': 'No file selected'}), 400
+        
+        if not file.filename.endswith('.txt'):
+            return jsonify({'error': 'Only .txt files are allowed'}), 400
+        
+        content = file.read()
+        
+        if len(content) == 0:
+            return jsonify({'error': 'Cookies file is empty'}), 400
+        
+        if len(content) > 1024 * 1024:
+            return jsonify({'error': 'File too large. Maximum size is 1MB.'}), 400
+        
+        file_path = os.path.join('backend', 'youtube_cookies.txt')
+        with open(file_path, 'wb') as f:
+            f.write(content)
+        
+        return jsonify({
+            'success': True,
+            'message': 'YouTube cookies uploaded successfully. Downloads will now use authenticated session.',
+            'file_path': file_path
+        }), 200
+            
+    except Exception as e:
+        print(f"Error uploading YouTube cookies: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@api_keys_bp.route('/cookies-status', methods=['GET'])
+@jwt_required()
+def get_cookies_status():
+    """Check if YouTube cookies file exists"""
+    try:
+        current_user = get_current_user()
+        if not current_user or current_user['role'] != 'admin':
+            return jsonify({'error': 'Admin access required'}), 403
+        
+        file_path = os.path.join('backend', 'youtube_cookies.txt')
+        exists = os.path.exists(file_path)
+        
+        file_size = 0
+        modified_at = None
+        
+        if exists:
+            file_size = os.path.getsize(file_path)
+            modified_at = datetime.fromtimestamp(os.path.getmtime(file_path)).isoformat()
+        
+        return jsonify({
+            'exists': exists,
+            'file_path': file_path if exists else None,
+            'file_size_kb': round(file_size / 1024, 2) if exists else 0,
+            'modified_at': modified_at
+        }), 200
+            
+    except Exception as e:
+        print(f"Error checking cookies status: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@api_keys_bp.route('/delete-cookies', methods=['DELETE'])
+@jwt_required()
+def delete_youtube_cookies():
+    """Delete YouTube cookies file"""
+    try:
+        current_user = get_current_user()
+        if not current_user or current_user['role'] != 'admin':
+            return jsonify({'error': 'Admin access required'}), 403
+        
+        file_path = os.path.join('backend', 'youtube_cookies.txt')
+        
+        if not os.path.exists(file_path):
+            return jsonify({'error': 'Cookies file not found'}), 404
+        
+        os.remove(file_path)
+        
+        return jsonify({
+            'success': True,
+            'message': 'YouTube cookies deleted successfully'
+        }), 200
+            
+    except Exception as e:
+        print(f"Error deleting YouTube cookies: {e}")
+        return jsonify({'error': str(e)}), 500
+
 @api_keys_bp.route('/<provider>', methods=['DELETE'])
 @jwt_required()
 def delete_api_key(provider):
