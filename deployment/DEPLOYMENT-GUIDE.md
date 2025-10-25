@@ -1,7 +1,7 @@
 # 🚀 PHD Capital Rationale Studio - Complete Deployment Guide
 
 ## Server Information
-- **VPS IP:** 72.60.111.9
+- **VPS IP:** 147.79.68.141
 - **Domain:** researchrationale.in
 - **OS:** Ubuntu 24.04 LTS
 - **GitHub:** https://github.com/sudiptarafdar7-spec/PHD-Capital-Rationale-Studio-v1.git
@@ -12,11 +12,11 @@
 
 ### What You Need
 1. **Hostinger VPS Access:**
-   - Server IP: `72.60.111.9`
+   - Server IP: `147.79.68.141`
    - Root password (from Hostinger panel)
 
 2. **Domain Configuration:**
-   - DNS A Records pointing to `72.60.111.9`
+   - DNS A Records pointing to `147.79.68.141`
    - Both `researchrationale.in` and `www.researchrationale.in`
 
 3. **Windows PC with PowerShell** (for deployment)
@@ -31,7 +31,7 @@
 
 ### Connect to Server
 ```powershell
-ssh root@72.60.111.9
+ssh root@147.79.68.141
 ```
 
 - Type `yes` when asked about fingerprint
@@ -96,7 +96,7 @@ Press `Ctrl+C` to stop viewing logs.
 ### Test Application
 Open browser and visit:
 - `http://researchrationale.in`
-- `http://72.60.111.9`
+- `http://147.79.68.141`
 
 ---
 
@@ -127,7 +127,7 @@ After logging in:
 
 ```bash
 # Connect to server
-ssh root@72.60.111.9
+ssh root@147.79.68.141
 
 # Run update script
 cd /var/www/rationale-studio
@@ -145,13 +145,13 @@ bash deployment/update.sh
 ## 🔐 Optional: Setup SSL Certificate (HTTPS)
 
 ### Prerequisites
-✅ Your domain DNS must point to `72.60.111.9` (wait 5-60 minutes after DNS change)
+✅ Your domain DNS must point to `147.79.68.141` (wait 5-60 minutes after DNS change)
 
 ### Verify DNS First
 ```bash
 # Check if DNS is configured correctly
 dig researchrationale.in +short
-# Should return: 72.60.111.9
+# Should return: 147.79.68.141
 ```
 
 ### Install SSL Certificate
@@ -367,13 +367,14 @@ If you encounter issues not covered here:
 
 ## 🎯 Quick Start Checklist
 
-- [ ] SSH into server: `ssh root@72.60.111.9`
+- [ ] SSH into server: `ssh root@147.79.68.141`
 - [ ] Download deploy.sh from GitHub
 - [ ] Run: `bash deploy.sh`
 - [ ] Wait 10-15 minutes
 - [ ] Visit: `http://researchrationale.in`
 - [ ] Login with: `admin@phdcapital.in` / `admin123`
 - [ ] Add API keys in Admin Panel
+- [ ] Upload YouTube cookies (Settings → API Keys → YouTube Authentication)
 - [ ] Test by processing a YouTube video
 - [ ] (Optional) Setup SSL: `certbot --nginx`
 

@@ -1,7 +1,7 @@
 # 🚀 Quick Deployment Reference
 
 ## Server Details
-- **IP:** 72.60.111.9
+- **IP:** 147.79.68.141
 - **Domain:** researchrationale.in
 - **Project:** rationale-studio
 - **OS:** Ubuntu 24.04 LTS
@@ -13,7 +13,7 @@
 ### First Time Setup
 ```bash
 # SSH to server
-ssh root@72.60.111.9
+ssh root@147.79.68.141
 
 # Download and run deployment
 cd /root
@@ -29,7 +29,7 @@ bash deploy.sh
 ## 🔄 Quick Update (After Git Push)
 
 ```bash
-ssh root@72.60.111.9
+ssh root@147.79.68.141
 cd /var/www/rationale-studio
 bash deployment/update.sh
 ```
@@ -87,7 +87,7 @@ sudo -u postgres pg_dump phd_rationale_db > backup.sql
 ## 🔐 SSL Setup (Optional)
 
 ```bash
-# First verify DNS points to 72.60.111.9
+# First verify DNS points to 147.79.68.141
 dig researchrationale.in +short
 
 # Install certbot
@@ -147,10 +147,11 @@ See `DEPLOYMENT-GUIDE.md` for complete documentation including:
 
 ## ✅ Deployment Checklist
 
-- [ ] SSH: `ssh root@72.60.111.9`
+- [ ] SSH: `ssh root@147.79.68.141`
 - [ ] Deploy: `bash deploy.sh`
 - [ ] Login: `admin@phdcapital.in` / `admin123`
 - [ ] Add API keys in Admin Panel
+- [ ] Upload YouTube cookies (Settings → API Keys → YouTube Authentication)
 - [ ] (Optional) SSL: `certbot --nginx`
 
 **Done!** 🎉
