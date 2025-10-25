@@ -4,7 +4,7 @@ expertMode = true
 
 [nix]
 channel = "stable-25_05"
-packages = ["cairo", "cargo", "ffmpeg-full", "freetype", "ghostscript", "glibcLocales", "gobject-introspection", "gtk3", "lcms2", "libiconv", "libimagequant", "libjpeg", "libtiff", "libwebp", "libxcrypt", "openjpeg", "pkg-config", "qhull", "rapidfuzz-cpp", "rustc", "taskflow", "tcl", "tk", "yt-dlp", "zlib", "systemdUkify"]
+packages = ["c-ares", "cacert", "cairo", "cargo", "chromedriver", "ffmpeg-full", "freetype", "ghostscript", "glibcLocales", "gobject-introspection", "grpc", "gtk3", "lcms2", "libcxx", "libiconv", "libimagequant", "libjpeg", "libtiff", "libwebp", "libxcrypt", "openjpeg", "openssl", "pkg-config", "qhull", "rapidfuzz-cpp", "rustc", "systemdUkify", "taskflow", "tcl", "tk", "yt-dlp", "zlib"]
 
 [workflows]
 runButton = "Project"
