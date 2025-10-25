@@ -182,7 +182,7 @@ def upload_youtube_cookies():
 @api_keys_bp.route('/cookies-status', methods=['GET'])
 @jwt_required()
 def get_cookies_status():
-    """Check if YouTube cookies file exists"""
+    """Check if YouTube cookies file exists with diagnostic information"""
     try:
         current_user = get_current_user()
         if not current_user or current_user['role'] != 'admin':
@@ -193,16 +193,30 @@ def get_cookies_status():
         
         file_size = 0
         modified_at = None
+        is_readable = False
+        absolute_path = os.path.abspath(file_path)
+        current_dir = os.getcwd()
         
         if exists:
             file_size = os.path.getsize(file_path)
             modified_at = datetime.fromtimestamp(os.path.getmtime(file_path)).isoformat()
+            # Check if file is readable
+            is_readable = os.access(file_path, os.R_OK)
         
         return jsonify({
             'exists': exists,
-            'file_path': file_path if exists else None,
+            'file_path': file_path,
+            'absolute_path': absolute_path,
+            'current_working_dir': current_dir,
             'file_size_kb': round(file_size / 1024, 2) if exists else 0,
-            'modified_at': modified_at
+            'modified_at': modified_at,
+            'is_readable': is_readable,
+            'diagnostic': {
+                'relative_path': file_path,
+                'resolved_path': absolute_path,
+                'exists': exists,
+                'readable': is_readable
+            }
         }), 200
             
     except Exception as e:

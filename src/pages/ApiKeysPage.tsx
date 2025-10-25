@@ -24,6 +24,15 @@ export default function ApiKeysPage() {
     exists: boolean;
     file_size_kb: number;
     modified_at: string | null;
+    absolute_path?: string;
+    current_working_dir?: string;
+    is_readable?: boolean;
+    diagnostic?: {
+      relative_path: string;
+      resolved_path: string;
+      exists: boolean;
+      readable: boolean;
+    };
   } | null>(null);
   const [configuredProviders, setConfiguredProviders] = useState<Record<string, boolean>>({
     openai: false,
@@ -555,17 +564,52 @@ export default function ApiKeysPage() {
 
             {/* Current Status */}
             {cookiesStatus?.exists && (
-              <div className="mb-4 p-3 bg-muted/50 rounded-lg space-y-1">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="text-muted-foreground">File Size:</span>
-                  <span className="text-foreground font-medium">{cookiesStatus.file_size_kb} KB</span>
+              <div className="mb-4 space-y-2">
+                <div className="p-3 bg-muted/50 rounded-lg space-y-1">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-muted-foreground">File Size:</span>
+                    <span className="text-foreground font-medium">{cookiesStatus.file_size_kb} KB</span>
+                  </div>
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-muted-foreground">Last Updated:</span>
+                    <span className="text-foreground font-medium">
+                      {cookiesStatus.modified_at ? new Date(cookiesStatus.modified_at).toLocaleString() : 'N/A'}
+                    </span>
+                  </div>
+                  {cookiesStatus.is_readable !== undefined && (
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-muted-foreground">Readable:</span>
+                      <span className={`font-medium ${cookiesStatus.is_readable ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                        {cookiesStatus.is_readable ? '✓ Yes' : '✗ No (Permission Issue!)'}
+                      </span>
+                    </div>
+                  )}
                 </div>
-                <div className="flex items-center justify-between text-xs">
-                  <span className="text-muted-foreground">Last Updated:</span>
-                  <span className="text-foreground font-medium">
-                    {cookiesStatus.modified_at ? new Date(cookiesStatus.modified_at).toLocaleString() : 'N/A'}
-                  </span>
-                </div>
+                
+                {/* Diagnostic Info */}
+                {cookiesStatus.diagnostic && (
+                  <details className="p-3 bg-blue-500/10 border border-blue-500/30 rounded-lg text-xs">
+                    <summary className="cursor-pointer font-medium text-blue-600 dark:text-blue-400 flex items-center gap-2">
+                      <Info className="w-4 h-4" />
+                      Diagnostic Information (for troubleshooting)
+                    </summary>
+                    <div className="mt-2 space-y-1 text-blue-600/80 dark:text-blue-400/80 font-mono">
+                      <div><strong>Working Dir:</strong> {cookiesStatus.current_working_dir}</div>
+                      <div><strong>Relative Path:</strong> {cookiesStatus.diagnostic.relative_path}</div>
+                      <div><strong>Absolute Path:</strong> {cookiesStatus.diagnostic.resolved_path}</div>
+                      <div><strong>File Exists:</strong> {cookiesStatus.diagnostic.exists ? '✓ Yes' : '✗ No'}</div>
+                      <div><strong>File Readable:</strong> {cookiesStatus.diagnostic.readable ? '✓ Yes' : '✗ No'}</div>
+                    </div>
+                    {!cookiesStatus.diagnostic.readable && cookiesStatus.diagnostic.exists && (
+                      <div className="mt-2 p-2 bg-red-500/10 border border-red-500/30 rounded text-red-600 dark:text-red-400">
+                        <strong>⚠️ Permission Issue:</strong> File exists but cannot be read. On VPS, run:
+                        <code className="block mt-1 p-1 bg-black/20 rounded">
+                          sudo chmod 644 {cookiesStatus.diagnostic.resolved_path}
+                        </code>
+                      </div>
+                    )}
+                  </details>
+                )}
               </div>
             )}
 
