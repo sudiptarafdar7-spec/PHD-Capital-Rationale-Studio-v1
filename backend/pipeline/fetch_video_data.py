@@ -20,10 +20,11 @@ except ImportError:
 def extract_video_id(youtube_url):
     """
     Extracts the YouTube video ID from a URL or returns it directly if already an ID.
+    Supports all YouTube URL formats: watch, live, shorts, embed, and short URLs.
     """
     if re.match(r"^[a-zA-Z0-9_-]{11}$", youtube_url):
         return youtube_url
-    match = re.search(r"(?:v=|youtu\.be/|embed/|shorts/)([a-zA-Z0-9_-]{11})", youtube_url)
+    match = re.search(r"(?:v=|youtu\.be/|embed/|shorts/|live/)([a-zA-Z0-9_-]{11})", youtube_url)
     if match:
         return match.group(1)
     raise ValueError("Invalid YouTube URL or Video ID")
