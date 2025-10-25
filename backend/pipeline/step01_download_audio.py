@@ -1,6 +1,6 @@
 """
 Step 1: Download Audio from YouTube Video
-Uses yt-dlp with OAuth authentication for VPS bot detection bypass
+Uses yt-dlp with cookies authentication for VPS bot detection bypass
 """
 import os
 import subprocess
@@ -21,7 +21,7 @@ USER_AGENTS = [
 
 def download_audio(job_id, youtube_url, cookies_file=None):
     """
-    Bulletproof audio download with OAuth authentication support.
+    Bulletproof audio download with cookies authentication support.
     Download audio from YouTube video and convert to 16 kHz mono WAV.
     
     Args:
@@ -101,23 +101,14 @@ def download_audio(job_id, youtube_url, cookies_file=None):
                     },
                 }
                 
-                # Priority 1: Use OAuth if configured (most reliable for VPS)
-                # Check if OAuth token exists
-                oauth_cache_dir = os.path.join('backend', '.yt-dlp-oauth')
-                if os.path.exists(oauth_cache_dir):
-                    ydl_opts['username'] = 'oauth'
-                    ydl_opts['cachedir'] = oauth_cache_dir
-                    if attempt == 1:
-                        print(f"  ✓ Using OAuth authentication")
-                
-                # Priority 2: Use cookies file if OAuth not available
-                elif cookies_file and os.path.exists(cookies_file):
+                # Use cookies file for authentication (recommended method for VPS)
+                if cookies_file and os.path.exists(cookies_file):
                     ydl_opts['cookiefile'] = cookies_file
                     if attempt == 1:
                         print(f"  ✓ Using cookies file for authentication")
                 else:
                     if attempt == 1:
-                        print(f"  ⚠️ No authentication configured (OAuth or cookies)")
+                        print(f"  ⚠️ No cookies configured")
                         print(f"  ⚠️ Downloads may fail on VPS servers due to bot detection")
                 
                 # Attempt download
@@ -149,7 +140,7 @@ def download_audio(job_id, youtube_url, cookies_file=None):
             
             # Provide helpful error message if authentication is missing
             if 'Sign in to confirm' in str(last_error) or '403' in str(last_error):
-                error_msg += '\n\n💡 TIP: This error usually means YouTube bot detection. Please configure OAuth authentication on your VPS. See YOUTUBE_OAUTH_SETUP.md for instructions.'
+                error_msg += '\n\n💡 TIP: This error usually means YouTube bot detection. Please upload cookies.txt file in Settings → API Keys. See YOUTUBE_COOKIES_SETUP.md for instructions.'
             
             return {
                 'success': False,

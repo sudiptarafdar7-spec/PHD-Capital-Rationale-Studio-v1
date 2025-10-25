@@ -1,5 +1,7 @@
 # YouTube Cookies Setup Guide
 
+**✅ OFFICIAL RECOMMENDED METHOD:** Cookies are the officially recommended method by yt-dlp for YouTube authentication in 2024.
+
 ## Why Do I Need This?
 
 YouTube uses bot detection to block video downloads from VPS and cloud servers. This is why you see errors like:
@@ -76,6 +78,19 @@ YouTube cookies expire after some time (usually 30-90 days). You'll need to re-u
 
 ---
 
+## ❓ What About OAuth?
+
+You may have heard about OAuth authentication for yt-dlp. **Native OAuth support was removed from yt-dlp in November 2024** because it was broken.
+
+**Current status:**
+- ❌ Native OAuth = Removed (no longer works)
+- ⚠️ OAuth Plugin = Deprecated/obsolete  
+- ✅ **Cookies = Official recommended method**
+
+**Bottom line:** Use cookies (this guide) - it's simpler, more reliable, and officially recommended by yt-dlp.
+
+---
+
 ## 🛡️ Security & Privacy
 
 ### Is this safe?
@@ -140,8 +155,8 @@ Yes! You can:
 The cookies.txt file uses Netscape cookie format:
 ```
 # Netscape HTTP Cookie File
-.youtube.com	TRUE	/	TRUE	1234567890	CONSENT	YES+...
-.youtube.com	TRUE	/	FALSE	1234567890	VISITOR_INFO1_LIVE	...
+.youtube.com    TRUE    /       TRUE    1234567890      CONSENT YES+...
+.youtube.com    TRUE    /       FALSE   1234567890      VISITOR_INFO1_LIVE      ...
 ```
 
 ### How It Works
