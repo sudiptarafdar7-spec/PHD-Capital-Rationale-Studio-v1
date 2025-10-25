@@ -59,6 +59,15 @@ The application features a clear separation between frontend and backend, built 
 ## Recent Changes
 
 ### October 25, 2025
+- **YOUTUBE OAUTH AUTHENTICATION**: Production-grade VPS bot detection bypass using yt-dlp OAuth:
+  - **Primary Method**: OAuth authentication (tokens last 6+ months, auto-renew)
+  - **Fallback Method**: Cookies file support (if OAuth not configured)
+  - **Smart Detection**: Automatically checks for OAuth tokens in `backend/.yt-dlp-oauth/` directory
+  - **One-Time Setup**: CLI-based OAuth flow on VPS (no browser extension needed)
+  - **Documentation**: Comprehensive `YOUTUBE_OAUTH_SETUP.md` with step-by-step VPS setup instructions
+  - **Priority Chain**: OAuth (best) → Cookies (good) → No auth (fails on VPS)
+  - **Production-Ready**: Solves "Sign in to confirm you're not a bot" and 403 Forbidden errors on VPS
+  
 - **YOUTUBE COOKIES AUTHENTICATION SYSTEM**: Complete VPS bot detection bypass solution with admin-friendly UI:
   - **Backend Endpoints**: `/upload-cookies`, `/cookies-status`, `/delete-cookies` for managing YouTube authentication
   - **Admin UI**: New "YouTube Authentication" section in API Keys page with file upload, status display, and instructions
@@ -67,7 +76,7 @@ The application features a clear separation between frontend and backend, built 
   - **Documentation**: Comprehensive `YOUTUBE_COOKIES_SETUP.md` guide with browser extension instructions
   - **User Flow**: Sign in to YouTube → Export cookies with browser extension → Upload to admin panel → Downloads work on VPS
   - **Status Monitoring**: Shows file size, last modified date, configured/not configured badge
-  - **Production-Ready**: Solves "Sign in to confirm you're not a bot" errors on Hostinger VPS
+  - **Fallback Support**: Works as backup if OAuth is not configured
 
 - **BULLETPROOF AUDIO DOWNLOAD SYSTEM**: Completely rewrote `step01_download_audio.py` for maximum reliability across all servers including VPS:
   - Smart caching: Checks if audio already exists before downloading to save bandwidth and time
