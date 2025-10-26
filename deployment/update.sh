@@ -23,6 +23,9 @@ if [ "$EUID" -ne 0 ]; then
     exit 1
 fi
 
+# Fix Git ownership security check
+git config --global --add safe.directory "$PROJECT_DIR" 2>/dev/null || true
+
 # Navigate to project directory
 cd "$PROJECT_DIR"
 

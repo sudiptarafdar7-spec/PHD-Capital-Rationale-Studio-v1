@@ -170,6 +170,10 @@ echo "━━━━━━━━━━━━━━━━━━━━━━━━�
 
 if [ -d "$PROJECT_DIR" ]; then
     echo "   ℹ️  Project directory exists, updating..."
+    
+    # Fix Git ownership security check
+    git config --global --add safe.directory "$PROJECT_DIR" 2>/dev/null || true
+    
     cd "$PROJECT_DIR"
     git fetch origin
     git reset --hard origin/main
