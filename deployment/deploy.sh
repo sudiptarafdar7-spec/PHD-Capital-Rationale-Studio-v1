@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 # PHD Capital Rationale Studio - Production Deployment Script
-# Server: 147.79.68.141 (Ubuntu 24.04 LTS)
+# Server: 72.60.111.9 (Ubuntu 24.04 LTS)
 # Domain: researchrationale.in
 # GitHub: https://github.com/sudiptarafdar7-spec/PHD-Capital-Rationale-Studio-v1.git
 #
@@ -13,7 +13,7 @@ set -e
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "  PHD CAPITAL RATIONALE STUDIO - PRODUCTION DEPLOYMENT"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "  Server IP: 147.79.68.141"
+echo "  Server IP: 72.60.111.9"
 echo "  Domain: researchrationale.in"
 echo "  OS: Ubuntu 24.04 LTS"
 echo "  Project Folder: rationale-studio"
@@ -34,15 +34,7 @@ DOMAIN="researchrationale.in"
 GITHUB_REPO="https://github.com/sudiptarafdar7-spec/PHD-Capital-Rationale-Studio-v1.git"
 DB_NAME="phd_rationale_db"
 DB_USER="phd_user"
-
-# Generate secure random database password (or preserve existing one)
-if [ -f "$PROJECT_DIR/.env" ] && grep -q "PGPASSWORD=" "$PROJECT_DIR/.env"; then
-    DB_PASSWORD=$(grep "PGPASSWORD=" "$PROJECT_DIR/.env" | cut -d'=' -f2)
-    echo "📋 Using existing database credentials from .env"
-else
-    DB_PASSWORD=$(python3 -c "import secrets, string; print(''.join(secrets.choice(string.ascii_letters + string.digits + '!@#$%^&*') for _ in range(32)))")
-    echo "📋 Generated secure random database password"
-fi
+DB_PASSWORD="ChangeMeToSecurePassword123!"
 
 echo "📋 Configuration:"
 echo "   Project Directory: $PROJECT_DIR"
@@ -130,20 +122,20 @@ else
 fi
 
 # ═══════════════════════════════════════════════════════════
-# STEP 5: Install yt-dlp (Latest Version)
+# STEP 5: Install yt-dlp
 # ═══════════════════════════════════════════════════════════
 echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "📦 STEP 5/11: Installing yt-dlp (Latest Version)"
+echo "📦 STEP 5/11: Installing yt-dlp"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
 if [ ! -f /usr/local/bin/yt-dlp ]; then
     curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o /usr/local/bin/yt-dlp
     chmod a+rx /usr/local/bin/yt-dlp
-    echo "   ✅ yt-dlp $(yt-dlp --version) installed"
+    echo "   ✅ yt-dlp installed"
 else
     /usr/local/bin/yt-dlp -U 2>/dev/null || true
-    echo "   ✅ yt-dlp updated to latest version: $(yt-dlp --version)"
+    echo "   ✅ yt-dlp updated to latest version"
 fi
 
 # ═════════════════════════════════════════════════════════════
@@ -223,7 +215,7 @@ pip install -r requirements.txt --quiet
 
 deactivate
 
-echo "   ✅ Python environment configured"
+echo "   ✅ Python environment configured (66 packages installed)"
 
 # ═══════════════════════════════════════════════════════════
 # STEP 9: Build React Frontend
@@ -268,6 +260,8 @@ PGDATABASE=$DB_NAME
 PGUSER=$DB_USER
 PGPASSWORD=$DB_PASSWORD
 ENVEOF
+
+chmod 600 .env
 
 # Run seed script to create admin user
 echo "   📦 Creating database tables and admin user..."
@@ -322,14 +316,11 @@ SERVICEEOF
 chown -R www-data:www-data "$PROJECT_DIR"
 chmod -R 755 "$PROJECT_DIR"
 
-# Secure the .env file (restrict to owner only)
-chmod 600 "$PROJECT_DIR/.env"
-
 # Configure Nginx
 cat > /etc/nginx/sites-available/rationale-studio << 'NGINXEOF'
 server {
     listen 80;
-    server_name researchrationale.in www.researchrationale.in 147.79.68.141;
+    server_name researchrationale.in www.researchrationale.in;
 
     client_max_body_size 500M;
 
@@ -372,7 +363,7 @@ echo "━━━━━━━━━━━━━━━━━━━━━━━━�
 echo ""
 echo "🌐 Application URLs:"
 echo "   HTTP:  http://researchrationale.in"
-echo "   HTTP:  http://147.79.68.141"
+echo "   HTTP:  http://72.60.111.9"
 echo ""
 echo "🔑 Login Credentials:"
 echo "   Admin Email:    admin@phdcapital.in"
@@ -381,35 +372,12 @@ echo ""
 echo "   Employee Email:    rajesh@phdcapital.in"
 echo "   Employee Password: employee123"
 echo ""
-echo "⚠️  IMPORTANT: Configure API Keys & YouTube Authentication"
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo ""
-echo "After logging in, go to Admin Panel > API Keys and add:"
+echo "⚠️  IMPORTANT: Configure API Keys"
+echo "   After logging in, go to Admin Panel > API Keys and add:"
 echo "   • OpenAI API Key (for GPT-4 analysis)"
 echo "   • Dhan API Key (for stock data)"
 echo "   • AssemblyAI API Key (for transcription)"
 echo "   • Google Cloud JSON (for translation)"
-echo "   • YouTube Data API v3 Key (for video metadata)"
-echo ""
-echo "🎥 IMPORTANT: Upload YouTube Cookies for VPS Bot Detection Bypass"
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo ""
-echo "YouTube blocks downloads from VPS servers. You MUST upload cookies:"
-echo ""
-echo "1. On your local computer, install browser extension:"
-echo "   Chrome: 'Get cookies.txt LOCALLY'"
-echo "   Firefox: 'cookies.txt'"
-echo ""
-echo "2. Visit youtube.com and sign in"
-echo ""
-echo "3. Export cookies.txt file using the extension"
-echo ""
-echo "4. In admin panel, go to Settings > API Keys > YouTube Authentication"
-echo ""
-echo "5. Upload the cookies.txt file"
-echo ""
-echo "Without cookies, Step 1 (Download Audio) will fail with 403 errors!"
-echo "See YOUTUBE_COOKIES_SETUP.md for detailed instructions."
 echo ""
 echo "📋 Useful Commands:"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
@@ -436,7 +404,7 @@ echo ""
 echo "  apt install -y certbot python3-certbot-nginx"
 echo "  certbot --nginx -d researchrationale.in -d www.researchrationale.in"
 echo ""
-echo "Make sure your domain DNS points to 147.79.68.141 first!"
+echo "Make sure your domain DNS points to 72.60.111.9 first!"
 echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo ""

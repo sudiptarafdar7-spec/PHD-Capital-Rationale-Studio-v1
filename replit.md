@@ -59,38 +59,17 @@ The application features a clear separation between frontend and backend, built 
 ## Recent Changes
 
 ### October 25, 2025
-- **YOUTUBE COOKIES AUTHENTICATION SYSTEM** (Official Recommended Method): Complete VPS bot detection bypass solution with admin-friendly UI:
-  - **Backend Endpoints**: `/upload-cookies`, `/cookies-status`, `/delete-cookies` for managing YouTube authentication
-  - **Admin UI**: New "YouTube Authentication" section in API Keys page with file upload, status display, and instructions
-  - **Security**: Admin-only access, file validation (.txt only, max 1MB, non-empty), prevents DoS attacks
-  - **Pipeline Integration**: Automatically uses `backend/youtube_cookies.txt` if available for authenticated downloads
-  - **Documentation**: Comprehensive `YOUTUBE_COOKIES_SETUP.md` guide with browser extension instructions
-  - **User Flow**: Sign in to YouTube → Export cookies with browser extension → Upload to admin panel → Downloads work on VPS
-  - **Status Monitoring**: Shows file size, last modified date, configured/not configured badge
-  - **Fallback Support**: Works as backup if OAuth is not configured
-
-- **BULLETPROOF AUDIO DOWNLOAD SYSTEM**: Completely rewrote `step01_download_audio.py` for maximum reliability across all servers including VPS:
-  - Smart caching: Checks if audio already exists before downloading to save bandwidth and time
-  - Retry logic: 3 automatic attempts with exponential backoff (2s, 4s, 8s)
-  - Multiple user agents: Rotates through 5 different user agents (Windows, Mac, Linux, Firefox, Android) to reduce bot detection
-  - Robust error handling: 30s socket timeout, 5min ffmpeg timeout, detailed error messages
-  - Enhanced yt-dlp config: Multiple player clients (android, web, ios), fragment retries
-  - VPS-optimized: Lightweight implementation, no Playwright or heavy dependencies
-  - Production-ready: Maintains backward compatibility with existing pipeline
-
 - **YOUTUBE DATA API v3 MIGRATION**: Migrated video metadata fetching from yt-dlp to YouTube Data API v3 for improved reliability and performance. Changes include:
   - Added YouTube Data API v3 field to API Keys page (frontend)
   - Updated `fetch_video_data.py` to use YouTube Data API v3 instead of yt-dlp for metadata extraction
-  - Support for all YouTube URL formats: watch, live, shorts, embed, and short URLs
   - Installed `isodate` Python package for parsing ISO 8601 duration format
   - API key is securely stored in the database and retrieved during video metadata fetching
   - All metadata fields preserved (video_id, title, channel_name, upload_date, upload_time, duration, thumbnail, description)
   - Timezone conversion from UTC to IST maintained
   - Proper error handling for missing API keys, invalid URLs, and API failures
-  - Note: yt-dlp is still used for downloading audio and captions with improved reliability
+  - Note: yt-dlp is still used for downloading audio and captions as per the existing pipeline
 
 ### October 23, 2025
 - **BULLETPROOF DEPLOYMENT SOLUTION CREATED**: Completely rebuilt deployment system from scratch to handle all production issues. New deployment/ folder includes: deploy.sh (fully automated one-command VPS setup with Python 3.11, all system dependencies, automatic admin user creation), update.sh (one-command updates from git), DEPLOYMENT-GUIDE.md (comprehensive Windows PowerShell SSH guide), and README.md (quick command reference). Deployment script now: installs Python 3.11 from deadsnakes PPA, installs libpq-dev and postgresql-server-dev-all for psycopg2, exports environment variables for seed script to fix database connection, automatically runs seed script to create admin user, generates secure environment keys, sets up systemd service and Nginx reverse proxy. Tested frontend build successfully (14s, 2552 modules). Ready for production deployment to Hostinger VPS (IP: 72.60.111.9, Domain: researchrationale.in, Path: /var/www/rationale-studio).
 - **DEPLOYMENT FIX**: Fixed systemd error 203/EXEC by removing space from directory name. Changed from "Rationale Studio" to "rationale-studio" throughout codebase.
 - **CRITICAL BUG FIXES**: Fixed SavedRationalePage.tsx sonner import, removed leaked Google Cloud credentials, fixed potential null reference in database.py line 87, cleaned up temporary files, updated .gitignore.
-- **VPS UPDATE**: Updated deployment scripts for new Hostinger VPS IP: 147.79.68.141 (changed from 72.60.111.9). Updated deploy.sh, update.sh, DEPLOYMENT-GUIDE.md, and README.md with new server information and YouTube cookies authentication reminders.
