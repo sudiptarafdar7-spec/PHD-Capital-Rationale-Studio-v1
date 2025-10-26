@@ -44,8 +44,9 @@ The application features a clear separation between frontend and backend, built 
 - **Password Hashing**: bcrypt
 - **CORS Management**: Flask-CORS
 - **Video Metadata**: YouTube Data API v3 (for fetching video metadata)
-- **Video Processing**: `yt-dlp` (for downloading audio and captions)
-- **Audio Processing**: `ffmpeg-python`
+- **Audio Download**: RapidAPI (YT Search & Download MP3 service for downloading YouTube audio)
+- **Video Processing**: `yt-dlp` (for downloading captions only)
+- **Audio Processing**: `ffmpeg` (for converting audio to 16kHz mono WAV format)
 - **Transcription**: AssemblyAI API
 - **Data Processing**: pandas, numpy, isodate (for ISO 8601 duration parsing)
 - **Translation**: Google Cloud Translation API
@@ -57,6 +58,17 @@ The application features a clear separation between frontend and backend, built 
 - **HTTP Requests**: requests library
 
 ## Recent Changes
+
+### October 26, 2025
+- **RAPIDAPI AUDIO DOWNLOAD MIGRATION**: Migrated audio downloading from yt-dlp to RapidAPI (YT Search & Download MP3) for improved reliability and speed. Changes include:
+  - Added RapidAPI key field to API Keys page (frontend)
+  - Completely rewrote `step01_download_audio.py` to use RapidAPI instead of yt-dlp for audio extraction
+  - Added URL converter function to convert all YouTube URL formats to standard `watch?v=` format required by RapidAPI
+  - RapidAPI key is securely stored in the database and retrieved during audio download
+  - Download process: RapidAPI request → download MP3 → convert to 16kHz mono WAV using ffmpeg
+  - Maintained same return structure for backward compatibility with pipeline
+  - Supports all YouTube URL formats: /watch, /live, /shorts, /embed, and short URLs
+  - Note: yt-dlp is now only used for downloading captions (Step 2), audio download moved to RapidAPI
 
 ### October 25, 2025
 - **YOUTUBE DATA API v3 MIGRATION**: Migrated video metadata fetching from yt-dlp to YouTube Data API v3 for improved reliability and performance. Changes include:

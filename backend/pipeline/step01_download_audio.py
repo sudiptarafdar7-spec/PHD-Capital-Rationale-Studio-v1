@@ -1,88 +1,160 @@
 """
 Step 1: Download Audio from YouTube Video
-Uses yt-dlp to extract audio and converts to 16kHz mono WAV format
+Uses RapidAPI (YT Search & Download MP3) to download audio and converts to 16kHz mono WAV format
 """
 import os
+import re
 import subprocess
-from yt_dlp import YoutubeDL
+import http.client
+import json
+import urllib.request
+import urllib.parse
+from backend.utils.database import get_db_cursor
+
+
+def convert_to_watch_url(youtube_url):
+    """
+    Convert any YouTube URL format to standard watch?v= format
+    
+    Supports:
+    - https://www.youtube.com/watch?v=VIDEO_ID
+    - https://www.youtube.com/live/VIDEO_ID
+    - https://www.youtube.com/shorts/VIDEO_ID
+    - https://youtu.be/VIDEO_ID
+    - https://www.youtube.com/embed/VIDEO_ID
+    - VIDEO_ID (direct)
+    
+    Returns:
+        str: URL in format https://www.youtube.com/watch?v=VIDEO_ID
+    """
+    # If it's already a watch URL, return as is
+    if "watch?v=" in youtube_url:
+        return youtube_url
+    
+    # Extract video ID from various URL formats
+    video_id = None
+    
+    # Check if it's already just a video ID (11 characters)
+    if re.match(r"^[a-zA-Z0-9_-]{11}$", youtube_url):
+        video_id = youtube_url
+    else:
+        # Try to extract from various URL formats
+        match = re.search(r"(?:v=|youtu\.be/|embed/|shorts/|live/)([a-zA-Z0-9_-]{11})", youtube_url)
+        if match:
+            video_id = match.group(1)
+    
+    if not video_id:
+        raise ValueError(f"Could not extract video ID from URL: {youtube_url}")
+    
+    # Return standard watch URL
+    return f"https://www.youtube.com/watch?v={video_id}"
 
 
 def download_audio(job_id, youtube_url, cookies_file=None):
     """
-    Download audio from YouTube video and convert to 16 kHz mono WAV
+    Download audio from YouTube video using RapidAPI and convert to 16 kHz mono WAV
     
     Args:
         job_id: Job identifier
-        youtube_url: YouTube video URL
-        cookies_file: Optional path to cookies.txt file for authentication
+        youtube_url: YouTube video URL (any format)
+        cookies_file: Not used anymore (kept for backward compatibility)
     
     Returns:
         dict: {
             'success': bool,
-            'raw_audio': str,  # Path to raw audio file
-            'prepared_audio': str,  # Path to 16kHz mono audio file
+            'raw_audio': str,  # Path to raw audio file (MP3)
+            'prepared_audio': str,  # Path to 16kHz mono audio file (WAV)
             'raw_size_mb': float,
             'prepared_size_mb': float,
             'error': str or None
         }
     """
     try:
+        # Get RapidAPI key from database
+        with get_db_cursor() as cursor:
+            cursor.execute("""
+                SELECT key_value FROM api_keys 
+                WHERE LOWER(provider) = 'rapidapi'
+            """)
+            api_key_row = cursor.fetchone()
+            
+            if not api_key_row or not api_key_row.get('key_value'):
+                raise Exception(
+                    "RapidAPI key not found. "
+                    "Please add your RapidAPI key in the API Keys page."
+                )
+            
+            rapidapi_key = api_key_row['key_value']
+        
         # Setup paths
         audio_folder = os.path.join('backend', 'job_files', job_id, 'audio')
         os.makedirs(audio_folder, exist_ok=True)
         
-        raw_audio_path = os.path.join(audio_folder, 'raw_audio.wav')
+        raw_audio_path = os.path.join(audio_folder, 'raw_audio.mp3')
         prepared_audio_path = os.path.join(audio_folder, 'audio_16k_mono.wav')
-        temp_audio = os.path.join(audio_folder, 'temp_audio.wav')
         
-        # Step 1: Download audio using yt-dlp
-        print(f"🎧 Downloading audio from YouTube: {youtube_url}")
+        # Convert URL to standard watch format
+        print(f"🎧 Converting YouTube URL to standard format...")
+        standard_url = convert_to_watch_url(youtube_url)
+        print(f"✓ Standard URL: {standard_url}")
         
-        ydl_opts = {
-            'format': 'bestaudio/best',
-            'outtmpl': os.path.join(audio_folder, 'temp_audio.%(ext)s'),
-            'quiet': False,
-            'no_warnings': False,
-            'extract_flat': False,
-            'postprocessors': [{
-                'key': 'FFmpegExtractAudio',
-                'preferredcodec': 'wav',
-                'preferredquality': '192',
-            }],
+        # Step 1: Get download link from RapidAPI
+        print(f"🎧 Requesting download link from RapidAPI...")
+        
+        conn = http.client.HTTPSConnection("yt-search-and-download-mp3.p.rapidapi.com")
+        
+        headers = {
+            'x-rapidapi-key': rapidapi_key,
+            'x-rapidapi-host': "yt-search-and-download-mp3.p.rapidapi.com"
         }
         
-        # Add cookies if available (for bot detection / 403 errors)
-        if cookies_file and os.path.exists(cookies_file):
-            ydl_opts['cookiefile'] = cookies_file
-            print(f"✓ Using cookies file for authentication")
+        # URL encode the YouTube URL
+        encoded_url = urllib.parse.quote(standard_url, safe='')
+        request_path = f"/mp3?url={encoded_url}"
         
-        # Add options to avoid bot detection and 403 errors
-        ydl_opts.update({
-            'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-            'extractor_args': {
-                'youtube': {
-                    'player_client': ['android', 'web'],
-                    'player_skip': ['webpage', 'config'],
-                }
-            },
-        })
+        conn.request("GET", request_path, headers=headers)
+        res = conn.getresponse()
+        data = res.read()
+        conn.close()
         
-        # Download audio
-        with YoutubeDL(ydl_opts) as ydl:
-            ydl.download([youtube_url])
+        # Parse response
+        response_text = data.decode("utf-8")
+        print(f"✓ API Response received")
         
-        # Check if download succeeded
-        if not os.path.exists(temp_audio):
-            return {
-                'success': False,
-                'error': 'Failed to download audio file from YouTube'
-            }
+        # Parse JSON response
+        try:
+            response_json = json.loads(response_text)
+        except json.JSONDecodeError:
+            # Try to extract download URL from text response
+            # Response format: success:true title:"..." download:"..."
+            download_match = re.search(r'download:"([^"]+)"', response_text)
+            if download_match:
+                download_url = download_match.group(1)
+            else:
+                raise Exception(f"Could not parse API response: {response_text[:200]}")
+        else:
+            # JSON response
+            if not response_json.get('success'):
+                raise Exception(f"API request failed: {response_json.get('message', 'Unknown error')}")
+            
+            download_url = response_json.get('download')
+            if not download_url:
+                raise Exception("No download URL in API response")
         
-        # Rename to raw_audio.wav
-        os.rename(temp_audio, raw_audio_path)
-        print(f"✓ Audio downloaded: {raw_audio_path}")
+        print(f"✓ Download URL obtained")
         
-        # Step 2: Convert to 16 kHz mono using ffmpeg
+        # Step 2: Download MP3 file
+        print(f"🎧 Downloading MP3 file...")
+        
+        urllib.request.urlretrieve(download_url, raw_audio_path)
+        
+        if not os.path.exists(raw_audio_path):
+            raise Exception("Failed to download MP3 file")
+        
+        raw_size = os.path.getsize(raw_audio_path) / (1024 * 1024)  # MB
+        print(f"✓ Audio downloaded: {raw_audio_path} ({round(raw_size, 2)} MB)")
+        
+        # Step 3: Convert to 16 kHz mono WAV using ffmpeg
         print(f"🔊 Converting to 16 kHz mono WAV for transcription...")
         
         ffmpeg_cmd = [
@@ -112,11 +184,8 @@ def download_audio(job_id, youtube_url, cookies_file=None):
                 'error': 'Prepared audio file was not created'
             }
         
-        print(f"✓ Audio prepared: {prepared_audio_path}")
-        
-        # Get file sizes for logging
-        raw_size = os.path.getsize(raw_audio_path) / (1024 * 1024)  # MB
         prepared_size = os.path.getsize(prepared_audio_path) / (1024 * 1024)  # MB
+        print(f"✓ Audio prepared: {prepared_audio_path} ({round(prepared_size, 2)} MB)")
         
         return {
             'success': True,
