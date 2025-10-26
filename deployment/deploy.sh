@@ -122,20 +122,20 @@ else
 fi
 
 # ═══════════════════════════════════════════════════════════
-# STEP 5: Install yt-dlp
+# STEP 5: Install yt-dlp (for caption downloads only)
 # ═══════════════════════════════════════════════════════════
 echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "📦 STEP 5/11: Installing yt-dlp"
+echo "📦 STEP 5/11: Installing yt-dlp (for caption downloads)"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
 if [ ! -f /usr/local/bin/yt-dlp ]; then
     curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o /usr/local/bin/yt-dlp
     chmod a+rx /usr/local/bin/yt-dlp
-    echo "   ✅ yt-dlp installed"
+    echo "   ✅ yt-dlp installed (used for caption downloads)"
 else
     /usr/local/bin/yt-dlp -U 2>/dev/null || true
-    echo "   ✅ yt-dlp updated to latest version"
+    echo "   ✅ yt-dlp updated to latest version (used for caption downloads)"
 fi
 
 # ═════════════════════════════════════════════════════════════
@@ -374,6 +374,8 @@ echo "   Employee Password: employee123"
 echo ""
 echo "⚠️  IMPORTANT: Configure API Keys"
 echo "   After logging in, go to Admin Panel > API Keys and add:"
+echo "   • YouTube Data API v3 Key (for video metadata)"
+echo "   • RapidAPI Key (for audio downloads)"
 echo "   • OpenAI API Key (for GPT-4 analysis)"
 echo "   • Dhan API Key (for stock data)"
 echo "   • AssemblyAI API Key (for transcription)"

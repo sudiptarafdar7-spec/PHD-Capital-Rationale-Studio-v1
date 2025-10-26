@@ -145,12 +145,26 @@ See `DEPLOYMENT-GUIDE.md` for complete documentation including:
 
 ---
 
+## ⚠️ Required API Keys
+
+After deployment, configure these API keys in **Admin Panel > API Keys**:
+
+1. **YouTube Data API v3** - For fetching video metadata
+2. **RapidAPI** - For downloading audio from YouTube
+3. **OpenAI API** - For GPT-4 analysis
+4. **Dhan API** - For stock market data
+5. **AssemblyAI API** - For audio transcription
+6. **Google Cloud Translation** - For translation services
+
+---
+
 ## ✅ Deployment Checklist
 
 - [ ] SSH: `ssh root@72.60.111.9`
 - [ ] Deploy: `bash deploy.sh`
 - [ ] Login: `admin@phdcapital.in` / `admin123`
-- [ ] Add API keys in Admin Panel
+- [ ] Add all required API keys in Admin Panel
+- [ ] Test video processing pipeline
 - [ ] (Optional) SSL: `certbot --nginx`
 
 **Done!** 🎉
