@@ -138,10 +138,14 @@ def get_daily_history(security_id: str, start_date, end_date_non_inclusive, head
         "securityId": str(security_id),
         "exchangeSegment": exchange_segment,
         "instrument": "EQUITY",
+        "expiryCode": 0,
         "fromDate": start_date.strftime("%Y-%m-%d"),
         "toDate": end_date_non_inclusive.strftime("%Y-%m-%d")
     }
+    print(f"    [DEBUG] Payload: {payload}")
+    print(f"    [DEBUG] Headers: {dict(headers)}")
     data = _post("/charts/historical", payload, headers)
+    print(f"    [DEBUG] Response keys: {list(data.keys()) if isinstance(data, dict) else 'not a dict'}")
     return zip_candles(data)
 
 
