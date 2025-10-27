@@ -168,13 +168,16 @@ echo "━━━━━━━━━━━━━━━━━━━━━━━━�
 echo "📥 STEP 7/11: Cloning Application from GitHub"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
+# Fix Git ownership security (prevents "dubious ownership" error)
+git config --global --add safe.directory "$PROJECT_DIR" 2>/dev/null || true
+
 if [ -d "$PROJECT_DIR" ]; then
     echo "   ℹ️  Project directory exists, updating..."
-    
-    # Fix Git ownership security check
-    git config --global --add safe.directory "$PROJECT_DIR" 2>/dev/null || true
-    
     cd "$PROJECT_DIR"
+    
+    # Reset ownership to root for git operations
+    chown -R root:root "$PROJECT_DIR"
+    
     git fetch origin
     git reset --hard origin/main
     git pull origin main
@@ -219,7 +222,7 @@ pip install -r requirements.txt --quiet
 
 deactivate
 
-echo "   ✅ Python environment configured (66 packages installed)"
+echo "   ✅ Python environment configured"
 
 # ═══════════════════════════════════════════════════════════
 # STEP 9: Build React Frontend

@@ -59,6 +59,14 @@ The application features a clear separation between frontend and backend, built 
 
 ## Recent Changes
 
+### October 27, 2025
+- **DEPLOYMENT SCRIPTS REBUILD**: Completely rebuilt deployment scripts (deploy.sh and update.sh) from scratch to fix Git ownership errors. Key improvements:
+  - Added `git config --global --add safe.directory` to prevent "dubious ownership" errors
+  - Automatic ownership reset to root before git operations, then back to www-data for runtime
+  - Clean, well-structured scripts with comprehensive error handling
+  - Updated to include YouTube Data API v3 and RapidAPI key requirements
+  - Both initial deployment and update scripts now handle ownership correctly
+
 ### October 26, 2025
 - **RAPIDAPI AUDIO DOWNLOAD MIGRATION**: Migrated audio downloading from yt-dlp to RapidAPI (YT Search & Download MP3) for improved reliability and speed. Changes include:
   - Added RapidAPI key field to API Keys page (frontend)
