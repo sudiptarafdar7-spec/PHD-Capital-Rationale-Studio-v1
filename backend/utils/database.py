@@ -5,11 +5,8 @@ from backend.config import Config
 
 def get_db_connection():
     conn = psycopg2.connect(
-        host=Config.PGHOST,
-        port=Config.PGPORT,
-        database=Config.PGDATABASE,
-        user=Config.PGUSER,
-        password=Config.PGPASSWORD
+        Config.DATABASE_URL,
+        sslmode='require'
     )
     return conn
 
