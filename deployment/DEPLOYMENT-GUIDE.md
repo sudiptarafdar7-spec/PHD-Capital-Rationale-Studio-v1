@@ -114,8 +114,6 @@ After logging in:
 
 | Provider | Description | Required For |
 |----------|-------------|--------------|
-| **YouTube Data API v3** | YouTube Data API v3 Key | Fetching video metadata |
-| **RapidAPI** | RapidAPI Key | Downloading audio from YouTube |
 | **OpenAI** | GPT-4 API Key | Speaker detection, content analysis |
 | **Dhan** | Dhan API Access Token | Stock price charts |
 | **AssemblyAI** | AssemblyAI API Key | Audio transcription |

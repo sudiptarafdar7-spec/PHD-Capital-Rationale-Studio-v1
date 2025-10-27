@@ -122,20 +122,20 @@ else
 fi
 
 # ═══════════════════════════════════════════════════════════
-# STEP 5: Install yt-dlp (for caption downloads only)
+# STEP 5: Install yt-dlp
 # ═══════════════════════════════════════════════════════════
 echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "📦 STEP 5/11: Installing yt-dlp (for caption downloads)"
+echo "📦 STEP 5/11: Installing yt-dlp"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
 if [ ! -f /usr/local/bin/yt-dlp ]; then
     curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o /usr/local/bin/yt-dlp
     chmod a+rx /usr/local/bin/yt-dlp
-    echo "   ✅ yt-dlp installed (used for caption downloads)"
+    echo "   ✅ yt-dlp installed"
 else
     /usr/local/bin/yt-dlp -U 2>/dev/null || true
-    echo "   ✅ yt-dlp updated to latest version (used for caption downloads)"
+    echo "   ✅ yt-dlp updated to latest version"
 fi
 
 # ═════════════════════════════════════════════════════════════
@@ -168,16 +168,9 @@ echo "━━━━━━━━━━━━━━━━━━━━━━━━�
 echo "📥 STEP 7/11: Cloning Application from GitHub"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
-# Fix Git ownership security (prevents "dubious ownership" error)
-git config --global --add safe.directory "$PROJECT_DIR" 2>/dev/null || true
-
 if [ -d "$PROJECT_DIR" ]; then
     echo "   ℹ️  Project directory exists, updating..."
     cd "$PROJECT_DIR"
-    
-    # Reset ownership to root for git operations
-    chown -R root:root "$PROJECT_DIR"
-    
     git fetch origin
     git reset --hard origin/main
     git pull origin main
@@ -222,7 +215,7 @@ pip install -r requirements.txt --quiet
 
 deactivate
 
-echo "   ✅ Python environment configured"
+echo "   ✅ Python environment configured (66 packages installed)"
 
 # ═══════════════════════════════════════════════════════════
 # STEP 9: Build React Frontend
@@ -381,8 +374,6 @@ echo "   Employee Password: employee123"
 echo ""
 echo "⚠️  IMPORTANT: Configure API Keys"
 echo "   After logging in, go to Admin Panel > API Keys and add:"
-echo "   • YouTube Data API v3 Key (for video metadata)"
-echo "   • RapidAPI Key (for audio downloads)"
 echo "   • OpenAI API Key (for GPT-4 analysis)"
 echo "   • Dhan API Key (for stock data)"
 echo "   • AssemblyAI API Key (for transcription)"

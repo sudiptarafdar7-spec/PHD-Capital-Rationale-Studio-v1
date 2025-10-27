@@ -1,191 +1,243 @@
 """
 Step 1: Download Audio from YouTube Video
-Uses RapidAPI (YT Search & Download MP3) to download audio and converts to 16kHz mono WAV format
+Uses Apify YouTube Video Downloader API to get video URL, then ffmpeg to download and extract audio
 """
 import os
-import re
 import subprocess
-import http.client
-import json
-import urllib.request
-import urllib.parse
+from apify_client import ApifyClient
 from backend.utils.database import get_db_cursor
-
-
-def convert_to_watch_url(youtube_url):
-    """
-    Convert any YouTube URL format to standard watch?v= format
-    
-    Supports:
-    - https://www.youtube.com/watch?v=VIDEO_ID
-    - https://www.youtube.com/live/VIDEO_ID
-    - https://www.youtube.com/shorts/VIDEO_ID
-    - https://youtu.be/VIDEO_ID
-    - https://www.youtube.com/embed/VIDEO_ID
-    - VIDEO_ID (direct)
-    
-    Returns:
-        str: URL in format https://www.youtube.com/watch?v=VIDEO_ID
-    """
-    # If it's already a watch URL, return as is
-    if "watch?v=" in youtube_url:
-        return youtube_url
-    
-    # Extract video ID from various URL formats
-    video_id = None
-    
-    # Check if it's already just a video ID (11 characters)
-    if re.match(r"^[a-zA-Z0-9_-]{11}$", youtube_url):
-        video_id = youtube_url
-    else:
-        # Try to extract from various URL formats
-        match = re.search(r"(?:v=|youtu\.be/|embed/|shorts/|live/)([a-zA-Z0-9_-]{11})", youtube_url)
-        if match:
-            video_id = match.group(1)
-    
-    if not video_id:
-        raise ValueError(f"Could not extract video ID from URL: {youtube_url}")
-    
-    # Return standard watch URL
-    return f"https://www.youtube.com/watch?v={video_id}"
 
 
 def download_audio(job_id, youtube_url, cookies_file=None):
     """
-    Download audio from YouTube video using RapidAPI and convert to 16 kHz mono WAV
+    Download audio from YouTube video using Apify and convert to 16 kHz mono WAV
     
     Args:
         job_id: Job identifier
-        youtube_url: YouTube video URL (any format)
-        cookies_file: Not used anymore (kept for backward compatibility)
+        youtube_url: YouTube video URL
+        cookies_file: Not used (kept for backward compatibility)
     
     Returns:
         dict: {
             'success': bool,
-            'raw_audio': str,  # Path to raw audio file (MP3)
-            'prepared_audio': str,  # Path to 16kHz mono audio file (WAV)
+            'raw_audio': str,  # Path to raw audio file (WAV format)
+            'prepared_audio': str,  # Path to 16kHz mono audio file
             'raw_size_mb': float,
             'prepared_size_mb': float,
             'error': str or None
         }
     """
     try:
-        # Get RapidAPI key from database
+        # Get Apify API key from database
         with get_db_cursor() as cursor:
             cursor.execute("""
                 SELECT key_value FROM api_keys 
-                WHERE LOWER(provider) = 'rapidapi'
+                WHERE LOWER(provider) = 'apify'
             """)
             api_key_row = cursor.fetchone()
             
-            if not api_key_row or not api_key_row.get('key_value'):
-                raise Exception(
-                    "RapidAPI key not found. "
-                    "Please add your RapidAPI key in the API Keys page."
-                )
+            if not api_key_row or not api_key_row['key_value']:
+                return {
+                    'success': False,
+                    'error': 'Apify API key not configured. Please add your Apify API key in the API Keys page.'
+                }
             
-            rapidapi_key = api_key_row['key_value']
-        
+            apify_api_key = api_key_row['key_value']
+
         # Setup paths
         audio_folder = os.path.join('backend', 'job_files', job_id, 'audio')
         os.makedirs(audio_folder, exist_ok=True)
         
-        raw_audio_path = os.path.join(audio_folder, 'raw_audio.mp3')
+        raw_audio_path = os.path.join(audio_folder, 'raw_audio.wav')
         prepared_audio_path = os.path.join(audio_folder, 'audio_16k_mono.wav')
         
-        # Convert URL to standard watch format
-        print(f"🎧 Converting YouTube URL to standard format...")
-        standard_url = convert_to_watch_url(youtube_url)
-        print(f"✓ Standard URL: {standard_url}")
+        # Step 1: Get video download URL from Apify
+        print(f"🎧 Fetching video URL from Apify: {youtube_url}")
         
-        # Step 1: Get download link from RapidAPI
-        print(f"🎧 Requesting download link from RapidAPI...")
-        
-        conn = http.client.HTTPSConnection("yt-search-and-download-mp3.p.rapidapi.com")
-        
-        headers = {
-            'x-rapidapi-key': rapidapi_key,
-            'x-rapidapi-host': "yt-search-and-download-mp3.p.rapidapi.com"
-        }
-        
-        # URL encode the YouTube URL
-        encoded_url = urllib.parse.quote(standard_url, safe='')
-        request_path = f"/mp3?url={encoded_url}"
-        
-        conn.request("GET", request_path, headers=headers)
-        res = conn.getresponse()
-        data = res.read()
-        conn.close()
-        
-        # Parse response
-        response_text = data.decode("utf-8")
-        print(f"✓ API Response received")
-        
-        # Parse JSON response
         try:
-            response_json = json.loads(response_text)
-        except json.JSONDecodeError:
-            # Try to extract download URL from text response
-            # Response format: success:true title:"..." download:"..."
-            download_match = re.search(r'download:"([^"]+)"', response_text)
-            if download_match:
-                download_url = download_match.group(1)
-            else:
-                raise Exception(f"Could not parse API response: {response_text[:200]}")
-        else:
-            # JSON response
-            if not response_json.get('success'):
-                raise Exception(f"API request failed: {response_json.get('message', 'Unknown error')}")
+            # Initialize Apify client
+            client = ApifyClient(apify_api_key)
             
-            download_url = response_json.get('download')
+            # Prepare the Actor input
+            run_input = {
+                "videos": [{
+                    "url": youtube_url
+                }]
+            }
+            
+            # Run the Actor and wait for it to finish
+            print("⏳ Starting Apify YouTube Video Downloader...")
+            run = client.actor("streamers/youtube-video-downloader").call(run_input=run_input)
+            
+            # Get the dataset ID
+            dataset_id = run.get("defaultDatasetId")
+            if not dataset_id:
+                return {
+                    'success': False,
+                    'error': 'Apify actor did not return a dataset ID. Please check your Apify API key.'
+                }
+            
+            print(f"✓ Apify job completed. Dataset ID: {dataset_id}")
+            
+        except Exception as e:
+            error_msg = str(e)
+            if "Invalid token" in error_msg or "Unauthorized" in error_msg:
+                return {
+                    'success': False,
+                    'error': 'Invalid Apify API key. Please check your API key in the API Keys page.'
+                }
+            return {
+                'success': False,
+                'error': f'Apify actor execution failed: {error_msg}'
+            }
+        
+        # Step 2: Fetch results from dataset
+        try:
+            items = list(client.dataset(dataset_id).iterate_items())
+            
+            if not items or len(items) == 0:
+                return {
+                    'success': False,
+                    'error': 'No video data returned from Apify. The video may be unavailable, private, or age-restricted.'
+                }
+            
+            # Get the first video result
+            video_data = items[0]
+            
+            # Find the download URL - try different possible fields
+            download_url = None
+            for url_field in ['videoUrl', 'url', 'downloadUrl', 'fileUrl', 'videoLink']:
+                if url_field in video_data and video_data[url_field]:
+                    download_url = video_data[url_field]
+                    break
+            
             if not download_url:
-                raise Exception("No download URL in API response")
+                return {
+                    'success': False,
+                    'error': f'No download URL found in Apify response. Available fields: {", ".join(video_data.keys())}'
+                }
+            
+            print(f"📥 Video URL obtained from Apify")
+            
+        except Exception as e:
+            return {
+                'success': False,
+                'error': f'Failed to fetch Apify dataset: {str(e)}'
+            }
         
-        print(f"✓ Download URL obtained")
+        # Step 3: Download and extract audio to WAV using ffmpeg
+        # This mimics the original yt-dlp behavior: extract audio and convert to WAV
+        print(f"🎵 Downloading and extracting audio to WAV...")
         
-        # Step 2: Download MP3 file
-        print(f"🎧 Downloading MP3 file...")
+        try:
+            # Download and extract audio directly to WAV format
+            # ffmpeg handles HLS/M3U8 URLs natively
+            ffmpeg_cmd = [
+                'ffmpeg',
+                '-i', download_url,
+                '-vn',  # No video
+                '-acodec', 'pcm_s16le',  # PCM WAV codec
+                '-ar', '44100',  # 44.1kHz sample rate
+                '-ac', '2',  # Stereo
+                '-user_agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+                '-y',  # Overwrite
+                raw_audio_path
+            ]
+            
+            result = subprocess.run(
+                ffmpeg_cmd,
+                capture_output=True,
+                text=True,
+                timeout=300  # 5 minutes timeout
+            )
+            
+            if result.returncode != 0:
+                stderr_preview = result.stderr[-500:] if len(result.stderr) > 500 else result.stderr
+                return {
+                    'success': False,
+                    'error': f'Audio download/extraction failed. The URL may have expired or be inaccessible. Error: {stderr_preview}'
+                }
+            
+            if not os.path.exists(raw_audio_path):
+                return {
+                    'success': False,
+                    'error': 'Raw audio file was not created. The download may have failed.'
+                }
+            
+            print(f"✓ Raw audio extracted: {raw_audio_path}")
+            
+        except subprocess.TimeoutExpired:
+            return {
+                'success': False,
+                'error': 'Audio download timed out after 5 minutes. The video may be too large or the connection is slow.'
+            }
+        except Exception as e:
+            return {
+                'success': False,
+                'error': f'Audio extraction failed: {str(e)}'
+            }
         
-        urllib.request.urlretrieve(download_url, raw_audio_path)
-        
-        if not os.path.exists(raw_audio_path):
-            raise Exception("Failed to download MP3 file")
-        
-        raw_size = os.path.getsize(raw_audio_path) / (1024 * 1024)  # MB
-        print(f"✓ Audio downloaded: {raw_audio_path} ({round(raw_size, 2)} MB)")
-        
-        # Step 3: Convert to 16 kHz mono WAV using ffmpeg
+        # Step 4: Convert to 16 kHz mono WAV for transcription
         print(f"🔊 Converting to 16 kHz mono WAV for transcription...")
         
-        ffmpeg_cmd = [
-            'ffmpeg',
-            '-i', raw_audio_path,
-            '-ar', '16000',  # 16 kHz sample rate (required for AssemblyAI)
-            '-ac', '1',       # mono (1 channel)
-            '-y',             # overwrite output file if exists
-            prepared_audio_path
-        ]
-        
-        result = subprocess.run(
-            ffmpeg_cmd,
-            capture_output=True,
-            text=True
-        )
-        
-        if result.returncode != 0:
+        try:
+            convert_cmd = [
+                'ffmpeg',
+                '-i', raw_audio_path,
+                '-ar', '16000',  # 16 kHz sample rate (required for AssemblyAI)
+                '-ac', '1',       # mono (1 channel)
+                '-y',             # overwrite
+                prepared_audio_path
+            ]
+            
+            result = subprocess.run(
+                convert_cmd,
+                capture_output=True,
+                text=True,
+                timeout=180  # 3 minutes timeout
+            )
+            
+            if result.returncode != 0:
+                stderr_preview = result.stderr[-300:] if len(result.stderr) > 300 else result.stderr
+                # Clean up raw audio on failure
+                if os.path.exists(raw_audio_path):
+                    os.remove(raw_audio_path)
+                return {
+                    'success': False,
+                    'error': f'Audio conversion to 16kHz mono failed: {stderr_preview}'
+                }
+            
+            if not os.path.exists(prepared_audio_path):
+                # Clean up raw audio on failure
+                if os.path.exists(raw_audio_path):
+                    os.remove(raw_audio_path)
+                return {
+                    'success': False,
+                    'error': 'Prepared audio file was not created'
+                }
+            
+            print(f"✓ Audio prepared: {prepared_audio_path}")
+            
+        except subprocess.TimeoutExpired:
+            # Clean up raw audio on failure
+            if os.path.exists(raw_audio_path):
+                os.remove(raw_audio_path)
             return {
                 'success': False,
-                'error': f'FFmpeg conversion failed: {result.stderr}'
+                'error': 'Audio conversion timed out after 3 minutes. The audio file may be too large.'
             }
-        
-        if not os.path.exists(prepared_audio_path):
+        except Exception as e:
+            # Clean up raw audio on failure
+            if os.path.exists(raw_audio_path):
+                os.remove(raw_audio_path)
             return {
                 'success': False,
-                'error': 'Prepared audio file was not created'
+                'error': f'Audio conversion failed: {str(e)}'
             }
         
+        # Get file sizes for logging
+        raw_size = os.path.getsize(raw_audio_path) / (1024 * 1024)  # MB
         prepared_size = os.path.getsize(prepared_audio_path) / (1024 * 1024)  # MB
-        print(f"✓ Audio prepared: {prepared_audio_path} ({round(prepared_size, 2)} MB)")
         
         return {
             'success': True,
@@ -199,5 +251,5 @@ def download_audio(job_id, youtube_url, cookies_file=None):
     except Exception as e:
         return {
             'success': False,
-            'error': f'Audio download error: {str(e)}'
+            'error': f'Unexpected error in audio download: {str(e)}'
         }

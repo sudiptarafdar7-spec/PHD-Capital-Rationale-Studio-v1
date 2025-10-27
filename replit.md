@@ -44,9 +44,9 @@ The application features a clear separation between frontend and backend, built 
 - **Password Hashing**: bcrypt
 - **CORS Management**: Flask-CORS
 - **Video Metadata**: YouTube Data API v3 (for fetching video metadata)
-- **Audio Download**: RapidAPI (YT Search & Download MP3 service for downloading YouTube audio)
+- **Video Download**: Apify YouTube Video Downloader API (for obtaining video download URLs)
+- **Audio Processing**: ffmpeg (for audio extraction and conversion)
 - **Video Processing**: `yt-dlp` (for downloading captions only)
-- **Audio Processing**: `ffmpeg` (for converting audio to 16kHz mono WAV format)
 - **Transcription**: AssemblyAI API
 - **Data Processing**: pandas, numpy, isodate (for ISO 8601 duration parsing)
 - **Translation**: Google Cloud Translation API
@@ -59,24 +59,17 @@ The application features a clear separation between frontend and backend, built 
 
 ## Recent Changes
 
-### October 27, 2025
-- **DEPLOYMENT SCRIPTS REBUILD**: Completely rebuilt deployment scripts (deploy.sh and update.sh) from scratch to fix Git ownership errors. Key improvements:
-  - Added `git config --global --add safe.directory` to prevent "dubious ownership" errors
-  - Automatic ownership reset to root before git operations, then back to www-data for runtime
-  - Clean, well-structured scripts with comprehensive error handling
-  - Updated to include YouTube Data API v3 and RapidAPI key requirements
-  - Both initial deployment and update scripts now handle ownership correctly
-
 ### October 26, 2025
-- **RAPIDAPI AUDIO DOWNLOAD MIGRATION**: Migrated audio downloading from yt-dlp to RapidAPI (YT Search & Download MP3) for improved reliability and speed. Changes include:
-  - Added RapidAPI key field to API Keys page (frontend)
-  - Completely rewrote `step01_download_audio.py` to use RapidAPI instead of yt-dlp for audio extraction
-  - Added URL converter function to convert all YouTube URL formats to standard `watch?v=` format required by RapidAPI
-  - RapidAPI key is securely stored in the database and retrieved during audio download
-  - Download process: RapidAPI request → download MP3 → convert to 16kHz mono WAV using ffmpeg
-  - Maintained same return structure for backward compatibility with pipeline
-  - Supports all YouTube URL formats: /watch, /live, /shorts, /embed, and short URLs
-  - Note: yt-dlp is now only used for downloading captions (Step 2), audio download moved to RapidAPI
+- **APIFY MIGRATION (STEP 1 - DOWNLOAD AUDIO)**: Completed migration from yt-dlp to Apify YouTube Video Downloader API for audio downloading. Changes include:
+  - Added Apify API field to API Keys page (frontend) for secure key management
+  - Updated `step01_download_audio.py` to use Apify for obtaining video download URLs
+  - Implemented ffmpeg-based audio extraction that handles HLS/M3U8 streams directly
+  - Maintains backward compatibility: raw_audio.wav as 44.1kHz PCM WAV, prepared_audio.wav as 16kHz mono WAV
+  - Granular error handling for Apify failures, URL expiry, download issues, and conversion failures
+  - Automatic cleanup of temporary files on both success and failure scenarios
+  - Two-step audio process matches original yt-dlp behavior: download/extract → convert to 16kHz mono
+  - Installed `apify-client` Python package for Apify API integration
+  - Note: yt-dlp is now only used for downloading captions (Step 2)
 
 ### October 25, 2025
 - **YOUTUBE DATA API v3 MIGRATION**: Migrated video metadata fetching from yt-dlp to YouTube Data API v3 for improved reliability and performance. Changes include:
@@ -87,7 +80,6 @@ The application features a clear separation between frontend and backend, built 
   - All metadata fields preserved (video_id, title, channel_name, upload_date, upload_time, duration, thumbnail, description)
   - Timezone conversion from UTC to IST maintained
   - Proper error handling for missing API keys, invalid URLs, and API failures
-  - Note: yt-dlp is still used for downloading audio and captions as per the existing pipeline
 
 ### October 23, 2025
 - **BULLETPROOF DEPLOYMENT SOLUTION CREATED**: Completely rebuilt deployment system from scratch to handle all production issues. New deployment/ folder includes: deploy.sh (fully automated one-command VPS setup with Python 3.11, all system dependencies, automatic admin user creation), update.sh (one-command updates from git), DEPLOYMENT-GUIDE.md (comprehensive Windows PowerShell SSH guide), and README.md (quick command reference). Deployment script now: installs Python 3.11 from deadsnakes PPA, installs libpq-dev and postgresql-server-dev-all for psycopg2, exports environment variables for seed script to fix database connection, automatically runs seed script to create admin user, generates secure environment keys, sets up systemd service and Nginx reverse proxy. Tested frontend build successfully (14s, 2552 modules). Ready for production deployment to Hostinger VPS (IP: 72.60.111.9, Domain: researchrationale.in, Path: /var/www/rationale-studio).

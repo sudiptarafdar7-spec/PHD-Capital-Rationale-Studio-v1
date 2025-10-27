@@ -17,7 +17,7 @@ export default function ApiKeysPage() {
     assemblyai: '',
     dhan: '',
     youtube_data: '',
-    rapidapi: '',
+    apify: '',
   });
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [configuredProviders, setConfiguredProviders] = useState<Record<string, boolean>>({
@@ -26,7 +26,7 @@ export default function ApiKeysPage() {
     google_cloud: false,
     dhan: false,
     youtube_data: false,
-    rapidapi: false,
+    apify: false,
   });
 
   useEffect(() => {
@@ -51,7 +51,7 @@ export default function ApiKeysPage() {
           google_cloud: false,
           dhan: false,
           youtube_data: false,
-          rapidapi: false,
+          apify: false,
         };
         
         data.forEach((item: any) => {
@@ -232,11 +232,11 @@ export default function ApiKeysPage() {
       placeholder: 'AIzaSy...',
     },
     {
-      id: 'rapidapi',
-      name: 'RapidAPI Key',
-      description: 'Required for downloading audio from YouTube videos (YT Search & Download MP3)',
+      id: 'apify',
+      name: 'Apify API',
+      description: 'Required for downloading YouTube videos (Step 1: Download Audio)',
       type: 'key',
-      placeholder: 'c7762ba089msh...',
+      placeholder: 'apify_api_...',
     },
   ];
 
