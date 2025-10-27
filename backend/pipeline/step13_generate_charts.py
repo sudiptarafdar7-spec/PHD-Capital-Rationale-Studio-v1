@@ -138,8 +138,6 @@ def get_daily_history(security_id: str, start_date, end_date_non_inclusive, head
         "securityId": str(security_id),
         "exchangeSegment": exchange_segment,
         "instrument": "EQUITY",
-        "expiryCode": 0,
-        "oi": False,
         "fromDate": start_date.strftime("%Y-%m-%d"),
         "toDate": end_date_non_inclusive.strftime("%Y-%m-%d")
     }
@@ -154,9 +152,8 @@ def get_intraday_1m(security_id: str, from_dt_local: datetime, to_dt_local: date
         "exchangeSegment": exchange_segment,
         "instrument": "EQUITY",
         "interval": "1",
-        "oi": False,
         "fromDate": from_dt_local.strftime("%Y-%m-%d %H:%M:%S"),
-        "toDate": to_dt_local.strftime("%Y-%m-%d %H:%M:%S"),
+        "toDate": to_dt_local.strftime("%Y-%m-%d %H:%M:%S")
     }
     data = _post("/charts/intraday", payload, headers)
     return zip_candles(data)
