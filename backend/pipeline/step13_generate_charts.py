@@ -90,6 +90,14 @@ def _post(path: str, payload: dict, headers: dict, max_retries: int = 4) -> dict
         if r.status_code in (429, 500, 502, 503, 504):
             time.sleep(2 ** attempt)
             continue
+        # Log the error response for debugging
+        try:
+            error_msg = r.json()
+            print(f"  ⚠️  Dhan API Error {r.status_code}: {error_msg}")
+            print(f"  📦 Payload: {payload}")
+        except:
+            print(f"  ⚠️  Dhan API Error {r.status_code}: {r.text}")
+            print(f"  📦 Payload: {payload}")
         r.raise_for_status()
     raise RuntimeError("Max retries exceeded")
 
@@ -480,12 +488,20 @@ def run(job_folder):
         for idx, row in df.iterrows():
             try:
                 security_id = str(row["SECURITY ID"]).strip()
+                # Remove decimal points from security ID if present (e.g., "1333.0" -> "1333")
+                if '.' in security_id:
+                    security_id = security_id.split('.')[0]
+                
                 short_name = str(row["SHORT NAME"]).strip()
                 exchange = str(row["EXCHANGE"]).strip().upper()
                 chart_type = str(row["CHART TYPE"]).strip().title()
+                segment = str(row["SEGMENT"]).strip()
                 
-                # Construct exchange segment for Dhan API
-                exchange_segment = f"{exchange}_EQ" if exchange in ["NSE", "BSE"] else "NSE_EQ"
+                # Use SEGMENT from CSV if available, otherwise construct it
+                if segment and segment.upper() != 'NAN':
+                    exchange_segment = segment.upper()
+                else:
+                    exchange_segment = f"{exchange}_EQ" if exchange in ["NSE", "BSE"] else "NSE_EQ"
                 
                 print(f"[{idx+1}/{len(df)}] Processing {short_name} ({chart_type}, {exchange_segment})...")
                 
