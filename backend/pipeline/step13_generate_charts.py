@@ -90,7 +90,13 @@ def _post(path: str, payload: dict, headers: dict, max_retries: int = 4) -> dict
         if r.status_code in (429, 500, 502, 503, 504):
             time.sleep(2 ** attempt)
             continue
-        r.raise_for_status()
+        # Capture error response body for better debugging
+        try:
+            error_body = r.json()
+            error_msg = f"{r.status_code} {r.reason}: {error_body}"
+        except:
+            error_msg = f"{r.status_code} {r.reason}: {r.text}"
+        raise requests.HTTPError(error_msg)
     raise RuntimeError("Max retries exceeded")
 
 
