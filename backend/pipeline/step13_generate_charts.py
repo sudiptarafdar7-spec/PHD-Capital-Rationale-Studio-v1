@@ -90,13 +90,7 @@ def _post(path: str, payload: dict, headers: dict, max_retries: int = 4) -> dict
         if r.status_code in (429, 500, 502, 503, 504):
             time.sleep(2 ** attempt)
             continue
-        # Capture error response body for better debugging
-        try:
-            error_body = r.json()
-            error_msg = f"{r.status_code} {r.reason}: {error_body}"
-        except:
-            error_msg = f"{r.status_code} {r.reason}: {r.text}"
-        raise requests.HTTPError(error_msg)
+        r.raise_for_status()
     raise RuntimeError("Max retries exceeded")
 
 
@@ -139,13 +133,11 @@ def get_daily_history(security_id: str, start_date, end_date_non_inclusive, head
         "exchangeSegment": exchange_segment,
         "instrument": "EQUITY",
         "expiryCode": 0,
+        "oi": False,
         "fromDate": start_date.strftime("%Y-%m-%d"),
         "toDate": end_date_non_inclusive.strftime("%Y-%m-%d")
     }
-    print(f"    [DEBUG] Payload: {payload}")
-    print(f"    [DEBUG] Headers: {dict(headers)}")
     data = _post("/charts/historical", payload, headers)
-    print(f"    [DEBUG] Response keys: {list(data.keys()) if isinstance(data, dict) else 'not a dict'}")
     return zip_candles(data)
 
 
@@ -156,8 +148,9 @@ def get_intraday_1m(security_id: str, from_dt_local: datetime, to_dt_local: date
         "exchangeSegment": exchange_segment,
         "instrument": "EQUITY",
         "interval": "1",
+        "oi": False,
         "fromDate": from_dt_local.strftime("%Y-%m-%d %H:%M:%S"),
-        "toDate": to_dt_local.strftime("%Y-%m-%d %H:%M:%S")
+        "toDate": to_dt_local.strftime("%Y-%m-%d %H:%M:%S"),
     }
     data = _post("/charts/intraday", payload, headers)
     return zip_candles(data)
