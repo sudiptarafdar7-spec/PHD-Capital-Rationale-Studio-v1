@@ -16,8 +16,6 @@ export default function ApiKeysPage() {
     openai: '',
     assemblyai: '',
     dhan: '',
-    youtube_data: '',
-    apify: '',
   });
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [configuredProviders, setConfiguredProviders] = useState<Record<string, boolean>>({
@@ -25,8 +23,6 @@ export default function ApiKeysPage() {
     assemblyai: false,
     google_cloud: false,
     dhan: false,
-    youtube_data: false,
-    apify: false,
   });
 
   useEffect(() => {
@@ -50,8 +46,6 @@ export default function ApiKeysPage() {
           assemblyai: false,
           google_cloud: false,
           dhan: false,
-          youtube_data: false,
-          apify: false,
         };
         
         data.forEach((item: any) => {
@@ -223,20 +217,6 @@ export default function ApiKeysPage() {
       description: 'Required for fetching stock prices and charts',
       type: 'key',
       placeholder: 'eyJhbGciOiJIUzI1NiIsInR5cCI6...',
-    },
-    {
-      id: 'youtube_data',
-      name: 'YouTube Data API v3',
-      description: 'Required for fetching video metadata (title, channel, upload date, duration)',
-      type: 'key',
-      placeholder: 'AIzaSy...',
-    },
-    {
-      id: 'apify',
-      name: 'Apify API',
-      description: 'Required for downloading YouTube videos (Step 1: Download Audio)',
-      type: 'key',
-      placeholder: 'apify_api_...',
     },
   ];
 
