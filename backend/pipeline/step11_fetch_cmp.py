@@ -89,10 +89,10 @@ def fetch_cmp_from_dhan(api_key, security_id, exchange, segment, instrument, dt)
         # API payload
         payload = {
             "securityId": security_id_str,
-            "exchangeSegment": exchange_segment,
-            "instrument": instrument,
+            "exchangeSegment": "NSE_EQ",
+            "instrument": "EQUITY",
             "interval": "1",
-            "oi": False,
+            "oi": false,
             "fromDate": from_date,
             "toDate": to_date
         }

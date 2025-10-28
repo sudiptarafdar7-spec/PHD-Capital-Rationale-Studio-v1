@@ -4,7 +4,33 @@ expertMode = true
 
 [nix]
 channel = "stable-25_05"
-packages = ["cairo", "cargo", "ffmpeg-full", "freetype", "ghostscript", "glibcLocales", "gobject-introspection", "gtk3", "lcms2", "libiconv", "libimagequant", "libjpeg", "libtiff", "libwebp", "libxcrypt", "openjpeg", "pkg-config", "qhull", "rapidfuzz-cpp", "rustc", "taskflow", "tcl", "tk", "yt-dlp", "zlib"]
+packages = [
+  "cairo",
+  "cargo",
+  "ffmpeg-full",
+  "freetype",
+  "ghostscript",
+  "glibcLocales",
+  "gobject-introspection",
+  "gtk3",
+  "lcms2",
+  "libiconv",
+  "libimagequant",
+  "libjpeg",
+  "libtiff",
+  "libwebp",
+  "libxcrypt",
+  "openjpeg",
+  "pkg-config",
+  "qhull",
+  "rapidfuzz-cpp",
+  "rustc",
+  "taskflow",
+  "tcl",
+  "tk",
+  "yt-dlp",
+  "zlib",
+]
 
 [workflows]
 runButton = "Project"
@@ -41,7 +67,7 @@ author = "agent"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "python3.11 -m backend.app"
-waitForPort = 8000
+waitForPort = 5000
 
 [workflows.workflow.metadata]
 outputType = "console"
@@ -52,32 +78,36 @@ externalPort = 80
 
 [[ports]]
 localPort = 5001
-
-[[ports]]
-localPort = 8000
 externalPort = 3000
 
 [[ports]]
+localPort = 5000
+
+[[ports]]
 localPort = 36879
-externalPort = 3003
 
 [[ports]]
 localPort = 38633
-externalPort = 3002
 
 [[ports]]
 localPort = 38827
-externalPort = 3001
 
 [[ports]]
 localPort = 43119
-externalPort = 4200
 
 [[ports]]
 localPort = 44175
-externalPort = 5000
 
 [deployment]
 deploymentTarget = "cloudrun"
-run = ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "2", "--timeout", "120", "backend.app:create_app()"]
+run = [
+  "gunicorn",
+  "--bind",
+  "0.0.0.0:5000",
+  "--workers",
+  "2",
+  "--timeout",
+  "120",
+  "backend.app:create_app()",
+]
 build = ["npm", "run", "build"]
