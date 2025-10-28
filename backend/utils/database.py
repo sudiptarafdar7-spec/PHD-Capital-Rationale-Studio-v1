@@ -6,7 +6,7 @@ from backend.config import Config
 def get_db_connection():
     conn = psycopg2.connect(
         Config.DATABASE_URL,
-        sslmode='require'
+        sslmode='prefer'
     )
     return conn
 

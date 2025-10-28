@@ -1,4 +1,4 @@
-                 """
+"""
 Step 9: Map Master File
 
 Maps extracted stocks from Step 8 to the master reference file to get:
